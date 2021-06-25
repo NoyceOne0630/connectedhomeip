@@ -27,12 +27,19 @@
 
 #include "ScreenManager.h"
 
-#include "driver/ledc.h"
 #include "esp_log.h"
 #include "esp_system.h"
 #include "esp_timer.h"
+#if CONFIG_DEVICE_TYPE_ESP32_C3_DEVKITM
+#include "driver/rmt.h"
+#include "led_strip.h"
+#define RMT_TX_DEFAULT_GPIO GPIO_NUM_8
+#define RMT_TX_DEFAULT_CHANNEL RMT_CHANNEL_0
+static led_strip_t *strip=NULL;
+#else
+#include "driver/ledc.h"
 #include "hal/ledc_types.h"
-
+#endif
 void LEDWidget::Init(gpio_num_t gpioNum)
 {
     mLastChangeTimeUS = 0;
@@ -44,7 +51,18 @@ void LEDWidget::Init(gpio_num_t gpioNum)
     mState            = false;
     mError            = false;
     errorTimer        = NULL;
-
+#if CONFIG_DEVICE_TYPE_ESP32_C3_DEVKITM
+    if (gpioNum == RMT_TX_DEFAULT_GPIO)
+    {
+       rmt_config_t config = RMT_DEFAULT_CONFIG_TX(RMT_TX_DEFAULT_GPIO, RMT_TX_DEFAULT_CHANNEL);
+       config.clk_div = 2;
+       rmt_config(&config);
+       rmt_driver_install(config.channel, 0, 0);
+       led_strip_config_t strip_config = LED_STRIP_DEFAULT_CONFIG(1,(led_strip_dev_t)config.channel);
+       strip = led_strip_new_rmt_ws2812(&strip_config);
+       mDefaultOnBrightness = UINT8_MAX;
+    }
+#else
     if (gpioNum < GPIO_NUM_MAX)
     {
         ledc_timer_config_t ledc_timer = {
@@ -67,6 +85,7 @@ void LEDWidget::Init(gpio_num_t gpioNum)
         ledc_channel_config(&ledc_channel);
         mDefaultOnBrightness = UINT8_MAX;
     }
+#endif
 }
 
 void LEDWidget::Set(bool state)
@@ -77,11 +96,18 @@ void LEDWidget::Set(bool state)
 
 void LEDWidget::SetBrightness(uint8_t brightness)
 {
+#if CONFIG_DEVICE_TYPE_ESP32_C3_DEVKITM
+    if(strip){
+        strip->set_pixel(strip, 0, brightness, brightness, brightness);//White LED
+        strip->refresh(strip, 100);
+    }
+#else
     if (mGPIONum < GPIO_NUM_MAX)
     {
         ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, brightness);
         ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0);
     }
+#endif
     if (brightness > 0)
     {
         mDefaultOnBrightness = brightness;
@@ -155,11 +181,20 @@ void LEDWidget::DoSet(bool state)
 {
     bool stateChange = (mState != state);
     mState           = state;
+#if CONFIG_DEVICE_TYPE_ESP32_C3_DEVKITM
+    if(strip)
+    {
+    int brightness = state ? mDefaultOnBrightness : 0;
+    strip->set_pixel(strip, 0, brightness, brightness, brightness);
+    strip->refresh(strip, 100);
+    }
+#else
     if (mGPIONum < GPIO_NUM_MAX)
     {
         ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, state ? mDefaultOnBrightness : 0);
         ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0);
     }
+#endif
     if (stateChange)
     {
 #if CONFIG_HAVE_DISPLAY

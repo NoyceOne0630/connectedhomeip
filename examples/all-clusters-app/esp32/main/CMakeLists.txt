@@ -76,6 +76,10 @@ elseif(("${CONFIG_DEVICE_TYPE_M5STACK}" STREQUAL "y") OR ("${CONFIG_DEVICE_TYPE_
     set(PRIV_REQUIRES_LIST chip QRCode bt tft spidrier screen-framework)
 endif()
 
+if("${CONFIG_DEVICE_TYPE_ESP32_C3_DEVKITM}" STREQUAL "y")
+    set(PRIV_REQUIRES_LIST ${PRIV_REQUIRES_LIST} led_strip)
+endif()
+
 idf_component_register(PRIV_INCLUDE_DIRS ${PRIV_INCLUDE_DIRS_LIST}
                        SRC_DIRS ${SRC_DIRS_LIST}
                        PRIV_REQUIRES ${PRIV_REQUIRES_LIST})
