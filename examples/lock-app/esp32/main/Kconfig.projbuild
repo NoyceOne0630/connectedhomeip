@@ -21,6 +21,24 @@
 menu "Demo"
 
     choice
+        prompt "Device Type"
+        default DEVICE_TYPE_ESP32_DEVKITC if IDF_TARGET_ESP32
+        default DEVICE_TYPE_ESP32_C3_DEVKITM if IDF_TARGET_ESP32C3
+        help
+            Specifies the type of ESP32 device.
+
+            Note that the "ESP32-DevKitC" choice is compatible with a number of clone devices
+            available from third-party manufacturers.
+
+        config DEVICE_TYPE_ESP32_DEVKITC
+            depends on IDF_TARGET_ESP32
+            bool "ESP32-DevKitC"
+        config DEVICE_TYPE_ESP32_C3_DEVKITM
+            depends on IDF_TARGET_ESP32C3
+            bool "ESP32C3-DevKitM"
+    endchoice
+
+    choice
       prompt "Rendezvous Mode"
       default RENDEZVOUS_MODE_BLE
       help
@@ -64,10 +82,12 @@ menu "Demo"
 endmenu
 
 menu "PW RPC Debug channel"
+depends on ENABLE_PW_RPC 
     config EXAMPLE_UART_PORT_NUM
         int "UART port number"
         range 0 2 if IDF_TARGET_ESP32
-        default 0 if IDF_TARGET_ESP32
+        range 0 1 if IDF_TARGET_ESP32C3
+        default 0
         help
             UART communication port number for the example.
             See UART documentation for available port numbers.
@@ -82,6 +102,7 @@ menu "PW RPC Debug channel"
     config EXAMPLE_UART_RXD
         int "UART RXD pin number"
         range 0 34 if IDF_TARGET_ESP32
+        range 0 19 if IDF_TARGET_ESP32C3
         default 3
         help
             GPIO number for UART RX pin. See UART documentation for more information
@@ -90,6 +111,7 @@ menu "PW RPC Debug channel"
     config EXAMPLE_UART_TXD
         int "UART TXD pin number"
         range 0 34 if IDF_TARGET_ESP32
+        range 0 19 if IDF_TARGET_ESP32C3
         default 1
         help
             GPIO number for UART TX pin. See UART documentation for more information

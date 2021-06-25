@@ -22,14 +22,14 @@ Development Framework and the xtensa-esp32-elf toolchain.
 The VSCode devcontainer has these components pre-installed, so you can skip this
 step. To install these components manually, follow these steps:
 
--   Clone the Espressif ESP-IDF and checkout
-    [v4.3 tag](https://github.com/espressif/esp-idf/releases/v4.3)
+-   Clone the Espressif ESP-IDF and checkout commit
+    [84a0c67a8c](https://github.com/espressif/esp-idf/tree/84a0c67a8cb6e4a4f15a2fc37f1aaad1d5bd7f5a)
 
           $ mkdir ${HOME}/tools
           $ cd ${HOME}/tools
           $ git clone https://github.com/espressif/esp-idf.git
           $ cd esp-idf
-          $ git checkout v4.3
+          $ git checkout 84a0c67a8c
           $ git submodule update --init
           $ ./install.sh
 

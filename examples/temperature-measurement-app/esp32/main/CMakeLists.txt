@@ -16,25 +16,38 @@
 #
 #
 # (Uses default behaviour of compiling all source files in directory, adding 'include' to include path.)
-idf_component_register(PRIV_INCLUDE_DIRS 
-                      "${CMAKE_CURRENT_LIST_DIR}"
-                      "${CMAKE_SOURCE_DIR}/third_party/connectedhomeip/third_party/nlio/repo/include"
-                      "${CMAKE_SOURCE_DIR}/third_party/connectedhomeip/src"
-                      "${CMAKE_CURRENT_LIST_DIR}/include"
-                      SRC_DIRS
-                      "${CMAKE_CURRENT_LIST_DIR}"
-                      "${CMAKE_CURRENT_LIST_DIR}/gen"
-                      "${CMAKE_SOURCE_DIR}/third_party/connectedhomeip/src/app/server"
-                      "${CMAKE_SOURCE_DIR}/third_party/connectedhomeip/src/app/util"
-                      "${CMAKE_SOURCE_DIR}/third_party/connectedhomeip/src/app/reporting"
-                      "${CMAKE_SOURCE_DIR}/third_party/connectedhomeip/src/app/clusters/basic"
-                      "${CMAKE_SOURCE_DIR}/third_party/connectedhomeip/src/app/clusters/bindings"
-                      "${CMAKE_SOURCE_DIR}/third_party/connectedhomeip/src/app/clusters/diagnostic-logs-server"
-                      "${CMAKE_SOURCE_DIR}/third_party/connectedhomeip/src/app/clusters/general-commissioning-server"
-                      "${CMAKE_SOURCE_DIR}/third_party/connectedhomeip/src/app/clusters/network-commissioning"
-                      "${CMAKE_SOURCE_DIR}/third_party/connectedhomeip/src/app/clusters/operational-credentials-server"
-                      "${CMAKE_SOURCE_DIR}/third_party/connectedhomeip/src/app/clusters/temperature-measurement-server"
-                      PRIV_REQUIRES chip QRCode tft spidriver bt screen-framework)
+set(PRIV_INCLUDE_DIRS_LIST
+   "${CMAKE_CURRENT_LIST_DIR}"
+   "${CMAKE_SOURCE_DIR}/third_party/connectedhomeip/third_party/nlio/repo/include"
+   "${CMAKE_SOURCE_DIR}/third_party/connectedhomeip/src"
+   "${CMAKE_CURRENT_LIST_DIR}/include"
+    )
+set(SRC_DIRS_LIST
+   "${CMAKE_CURRENT_LIST_DIR}"
+   "${CMAKE_CURRENT_LIST_DIR}/gen"
+   "${CMAKE_SOURCE_DIR}/third_party/connectedhomeip/src/app/server"
+   "${CMAKE_SOURCE_DIR}/third_party/connectedhomeip/src/app/util"
+   "${CMAKE_SOURCE_DIR}/third_party/connectedhomeip/src/app/reporting"
+   "${CMAKE_SOURCE_DIR}/third_party/connectedhomeip/src/app/clusters/basic"
+   "${CMAKE_SOURCE_DIR}/third_party/connectedhomeip/src/app/clusters/bindings"
+   "${CMAKE_SOURCE_DIR}/third_party/connectedhomeip/src/app/clusters/general-commissioning-server"
+   "${CMAKE_SOURCE_DIR}/third_party/connectedhomeip/src/app/clusters/network-commissioning"
+   "${CMAKE_SOURCE_DIR}/third_party/connectedhomeip/src/app/clusters/operational-credentials-server"
+   "${CMAKE_SOURCE_DIR}/third_party/connectedhomeip/src/app/clusters/temperature-measurement-server"
+   "${CMAKE_SOURCE_DIR}/third_party/connectedhomeip/src/app/clusters/diagnostic-logs-server"
+    )
+if(("${CONFIG_DEVICE_TYPE_ESP32_DEVKITC}" STREQUAL "y") OR ("${CONFIG_DEVICE_TYPE_ESP32_C3_DEVKITM}" STREQUAL "y"))
+    set(PRIV_INCLUDE_DIRS_LIST
+       ${PRIV_INCLUDE_DIRS_LIST}
+       "${CMAKE_SOURCE_DIR}/third_party/connectedhomeip/examples/common/screen-framework/include"
+        )
+    set(PRIV_REQUIRES_LIST chip QRCode bt)
+elseif("${CONFIG_DEVICE_TYPE_M5STACK}" STREQUAL "y")
+    set(PRIV_REQUIRES_LIST chip QRCode bt tft spidriver screen-framework)
+endif()
+idf_component_register(PRIV_INCLUDE_DIRS ${PRIV_INCLUDE_DIRS_LIST}
+                       SRC_DIRS ${SRC_DIRS_LIST}
+                       PRIV_REQUIRES ${PRIV_REQUIRES_LIST})
 
 set_property(TARGET ${COMPONENT_LIB} PROPERTY CXX_STANDARD 14) 
 target_compile_options(${COMPONENT_LIB} PRIVATE "-DLWIP_IPV6_SCOPES=0" "-DCHIP_HAVE_CONFIG_H")

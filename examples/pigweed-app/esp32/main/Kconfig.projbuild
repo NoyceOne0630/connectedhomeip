@@ -3,7 +3,8 @@ menu "PW RPC Example Configuration"
     config EXAMPLE_UART_PORT_NUM
         int "UART port number"
         range 0 2 if IDF_TARGET_ESP32
-        default 0 if IDF_TARGET_ESP32
+        range 0 1 if IDF_TARGET_ESP32C3
+        default 0
         help
             UART communication port number for the example.
             See UART documentation for available port numbers.
@@ -18,6 +19,7 @@ menu "PW RPC Example Configuration"
     config EXAMPLE_UART_RXD
         int "UART RXD pin number"
         range 0 34 if IDF_TARGET_ESP32
+        range 0 19 if IDF_TARGET_ESP32C3
         default 3
         help
             GPIO number for UART RX pin. See UART documentation for more information
@@ -26,6 +28,7 @@ menu "PW RPC Example Configuration"
     config EXAMPLE_UART_TXD
         int "UART TXD pin number"
         range 0 34 if IDF_TARGET_ESP32
+        range 0 19 if IDF_TARGET_ESP32C3
         default 1
         help
             GPIO number for UART TX pin. See UART documentation for more information
