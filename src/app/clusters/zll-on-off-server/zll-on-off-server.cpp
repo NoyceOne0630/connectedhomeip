@@ -53,8 +53,19 @@
  ******************************************************************************/
 
 #include "zll-on-off-server.h"
-#include "../../include/af.h"
+#include "app/util/af.h"
 #include <app/Command.h>
+#include <app/common/gen/af-structs.h>
+#include <app/common/gen/attribute-id.h>
+#include <app/common/gen/attribute-type.h>
+#include <app/common/gen/cluster-id.h>
+#include <app/common/gen/command-id.h>
+#include <app/util/basic-types.h>
+#include <app/clusters/scenes/scenes.h>
+#include <app/clusters/on-off-server/on-off-server.h>
+#include <app/common/gen/callback.h>
+
+using namespace ::chip;
 
 #define ZLL_ON_OFF_CLUSTER_ON_OFF_CONTROL_ACCEPT_ONLY_WHEN_ON_MASK EMBER_BIT(0)
 
@@ -71,7 +82,16 @@
 #define writeOffWaitTime(endpoint, offWaitTime)                                                                                    \
     writeInt16u((endpoint), ZCL_OFF_WAIT_TIME_ATTRIBUTE_ID, "off wait time", (offWaitTime))
 
-static EmberAfStatus readBoolean(uint8_t endpoint, EmberAfAttributeId attribute, const char * name, bool * value)
+static bool OffWithEffectState = false;
+static uint8_t mCurrentLevel   = 0;
+static uint8_t mNextLevel      = 0;
+static uint8_t mTargetLevel    = 0;
+static uint8_t mStartLevel     = 0;
+static uint16_t mRemainDs      = 0;
+static uint8_t meffectId       = 0xff;
+static uint8_t meffectVariant  = 0xff;
+
+static EmberAfStatus readBoolean(EndpointId endpoint, AttributeId attribute, const char * name, bool * value)
 {
     EmberAfStatus status = emberAfReadServerAttribute(endpoint, ZCL_ON_OFF_CLUSTER_ID, attribute, (uint8_t *) value, sizeof(bool));
     if (status != EMBER_ZCL_STATUS_SUCCESS)
@@ -81,7 +101,7 @@ static EmberAfStatus readBoolean(uint8_t endpoint, EmberAfAttributeId attribute,
     return status;
 }
 
-static EmberAfStatus writeBoolean(uint8_t endpoint, EmberAfAttributeId attribute, const char * name, bool value)
+static EmberAfStatus writeBoolean(EndpointId endpoint, AttributeId attribute, const char * name, bool value)
 {
     EmberAfStatus status =
         emberAfWriteServerAttribute(endpoint, ZCL_ON_OFF_CLUSTER_ID, attribute, (uint8_t *) &value, ZCL_BOOLEAN_ATTRIBUTE_TYPE);
@@ -92,7 +112,7 @@ static EmberAfStatus writeBoolean(uint8_t endpoint, EmberAfAttributeId attribute
     return status;
 }
 
-static EmberAfStatus readInt16u(uint8_t endpoint, EmberAfAttributeId attribute, const char * name, uint16_t * value)
+static EmberAfStatus readInt16u(EndpointId endpoint, AttributeId attribute, const char * name, uint16_t * value)
 {
     EmberAfStatus status =
         emberAfReadServerAttribute(endpoint, ZCL_ON_OFF_CLUSTER_ID, attribute, (uint8_t *) value, sizeof(uint16_t));
@@ -103,7 +123,7 @@ static EmberAfStatus readInt16u(uint8_t endpoint, EmberAfAttributeId attribute, 
     return status;
 }
 
-static EmberAfStatus writeInt16u(uint8_t endpoint, EmberAfAttributeId attribute, const char * name, uint16_t value)
+static EmberAfStatus writeInt16u(EndpointId endpoint, AttributeId attribute, const char * name, uint16_t value)
 {
     EmberAfStatus status =
         emberAfWriteServerAttribute(endpoint, ZCL_ON_OFF_CLUSTER_ID, attribute, (uint8_t *) &value, ZCL_INT16U_ATTRIBUTE_TYPE);
@@ -114,7 +134,71 @@ static EmberAfStatus writeInt16u(uint8_t endpoint, EmberAfAttributeId attribute,
     return status;
 }
 
-void emberAfOnOffClusterServerTickCallback(uint8_t endpoint)
+void CalculateNextLevelAndStepDs(uint16_t & stepDs)
+{
+    uint16_t leveldiff = mCurrentLevel > mTargetLevel ? mCurrentLevel - mTargetLevel : mTargetLevel - mCurrentLevel;
+    if (leveldiff > mRemainDs)
+    {
+        stepDs = 1;
+        uint16_t steplevel = (leveldiff + mRemainDs - 1) / mRemainDs;
+        mNextLevel = mCurrentLevel > mTargetLevel ? mCurrentLevel - steplevel : mCurrentLevel + steplevel;
+        mRemainDs -= stepDs;
+    }
+    else
+    {
+        mNextLevel = mCurrentLevel > mTargetLevel ? mCurrentLevel - 1 : mCurrentLevel + 1;
+        stepDs = (mRemainDs + leveldiff - 1) / leveldiff;
+        mRemainDs -= stepDs;
+    }
+}
+
+static EmberAfStatus FinishEffectOff(EndpointId endpoint)
+{
+    EmberAfStatus status = writeOnOff(endpoint, false);
+    if (status == EMBER_ZCL_STATUS_SUCCESS)
+    {
+        status = writeOnTime(endpoint, 0x0000);
+    }
+    status = emberAfWriteServerAttribute(endpoint, ZCL_LEVEL_CONTROL_CLUSTER_ID, ZCL_CURRENT_LEVEL_ATTRIBUTE_ID,
+                                         &(mStartLevel), ZCL_INT8U_ATTRIBUTE_TYPE);
+    OffWithEffectState = false;
+    mRemainDs          = 0;
+    mCurrentLevel      = mStartLevel;
+    mNextLevel         = 0;
+    mTargetLevel       = 0;
+    meffectId          = 0xff;
+    meffectVariant     = 0xff;
+    
+    return status;
+}
+
+static EmberAfStatus UpdateAndSchedule(EndpointId endpoint)
+{
+    if (mCurrentLevel == mTargetLevel)
+    {
+        if (mCurrentLevel == 0)
+            return FinishEffectOff(endpoint);
+        else
+        {
+            mTargetLevel = 0;
+            if (meffectId == 0 && meffectVariant == 2)                  // Fade to off in 12s
+                mRemainDs = 120;
+            else if (meffectId == 1 && meffectVariant == 0)             //Fade to off in 1s
+                mRemainDs = 10;
+            else 
+                return EMBER_ZCL_STATUS_INVALID_FIELD;
+            return UpdateAndSchedule(endpoint);
+        }
+    }
+    else
+    {
+        uint16_t stepDs;
+        CalculateNextLevelAndStepDs(stepDs);
+        emberAfScheduleServerTick(endpoint, ZCL_ON_OFF_CLUSTER_ID, stepDs * MILLISECOND_TICKS_PER_SECOND / 10);
+        return EMBER_ZCL_STATUS_SUCCESS;
+    }
+}
+void emberAfOnOffClusterServerTickCallback(EndpointId endpoint)
 {
     uint16_t onTime, offWaitTime;
     bool onOff;
@@ -124,54 +208,63 @@ void emberAfOnOffClusterServerTickCallback(uint8_t endpoint)
     {
         return;
     }
-
-    // If the values of the OnTime and OffWaitTime attributes are both less than
-    // 0xFFFF, the device shall then update the device every 1/10th second until
-    // both the OnTime and OffWaitTime attributes are equal to 0x0000, as
-    // follows:
-    //
-    //   If the value of the OnOff attribute is equal to 0x01 (on) and the value
-    //   of the OnTime attribute is greater than zero, the device shall decrement
-    //   the value of the OnTime attribute. If the value of the OnTime attribute
-    //   reaches 0x0000, the device shall set the OffWaitTime and OnOff
-    //   attributes to 0x0000 and 0x00, respectively.
-    //
-    //   If the value of the OnOff attribute is equal to 0x00 (off) and the value
-    //   of the OffWaitTime attribute is greater than zero, the device shall
-    //   decrement the value of the OffWaitTime attribute. If the value of the
-    //   OffWaitTime attribute reaches 0x0000, the device shall terminate the
-    //   update.
-    if (onOff && 0x0000 < onTime)
+    if(!OffWithEffectState)
     {
-        onTime--;
-        writeOnTime(endpoint, onTime);
-        if (onTime == 0x0000)
+        // If the values of the OnTime and OffWaitTime attributes are both less than
+        // 0xFFFF, the device shall then update the device every 1/10th second until
+        // both the OnTime and OffWaitTime attributes are equal to 0x0000, as
+        // follows:
+        //
+        //   If the value of the OnOff attribute is equal to 0x01 (on) and the value
+        //   of the OnTime attribute is greater than zero, the device shall decrement
+        //   the value of the OnTime attribute. If the value of the OnTime attribute
+        //   reaches 0x0000, the device shall set the OffWaitTime and OnOff
+        //   attributes to 0x0000 and 0x00, respectively.
+        //
+        //   If the value of the OnOff attribute is equal to 0x00 (off) and the value
+        //   of the OffWaitTime attribute is greater than zero, the device shall
+        //   decrement the value of the OffWaitTime attribute. If the value of the
+        //   OffWaitTime attribute reaches 0x0000, the device shall terminate the
+        //   update.
+        if (onOff && 0x0000 < onTime)
         {
-            offWaitTime = 0x0000;
+            onTime--;
+            writeOnTime(endpoint, onTime);
+            if (onTime == 0x0000)
+            {
+                offWaitTime = 0x0000;
+                writeOffWaitTime(endpoint, offWaitTime);
+                onOff = false;
+                writeOnOff(endpoint, onOff);
+                return;
+            }
+        }
+        else if (!onOff && 0x0000 < offWaitTime)
+        {
+            offWaitTime--;
             writeOffWaitTime(endpoint, offWaitTime);
-            onOff = false;
-            writeOnOff(endpoint, onOff);
-            return;
+            if (offWaitTime == 0x0000)
+            {
+                return;
+            }
         }
-    }
-    else if (!onOff && 0x0000 < offWaitTime)
-    {
-        offWaitTime--;
-        writeOffWaitTime(endpoint, offWaitTime);
-        if (offWaitTime == 0x0000)
-        {
-            return;
-        }
-    }
 
-    emberAfScheduleServerTick(endpoint, ZCL_ON_OFF_CLUSTER_ID, MILLISECOND_TICKS_PER_SECOND / 10);
+        emberAfScheduleServerTick(endpoint, ZCL_ON_OFF_CLUSTER_ID, MILLISECOND_TICKS_PER_SECOND / 10);
+    }
+    else
+    {
+        mCurrentLevel = mNextLevel;
+        emberAfWriteServerAttribute(endpoint, ZCL_LEVEL_CONTROL_CLUSTER_ID, ZCL_CURRENT_LEVEL_ATTRIBUTE_ID, &(mCurrentLevel),
+                                    ZCL_INT8U_ATTRIBUTE_TYPE);
+        UpdateAndSchedule(endpoint);
+    }
 }
 
 bool emberAfOnOffClusterOffWithEffectCallback(chip::app::Command * commandObj, uint8_t effectId, uint8_t effectVariant)
 {
     EmberAfStatus status = EMBER_ZCL_STATUS_INVALID_VALUE;
     bool globalSceneControl;
-    uint8_t endpoint = emberAfCurrentEndpoint();
+    EndpointId endpoint = emberAfCurrentEndpoint();
 
     // Ensure parameters have values withing proper range.
     if (effectId > EMBER_ZCL_ON_OFF_EFFECT_IDENTIFIER_DYING_LIGHT ||
@@ -211,18 +304,6 @@ bool emberAfOnOffClusterOffWithEffectCallback(chip::app::Command * commandObj, u
 
     // The application will handle the actual effect and variant.
     status = emberAfPluginZllOnOffServerOffWithEffectCallback(endpoint, effectId, effectVariant);
-    if (status == EMBER_ZCL_STATUS_SUCCESS)
-    {
-        // If the application handled the effect, the endpoint shall enter its
-        // "off" state, update the OnOff attribute accordingly, and set the OnTime
-        // attribute to 0x0000.
-        status = emberAfOnOffClusterSetValueCallback(endpoint, ZCL_OFF_COMMAND_ID, false);
-        if (status == EMBER_ZCL_STATUS_SUCCESS)
-        {
-            status = writeOnTime(endpoint, 0x0000);
-        }
-    }
-
 kickout:
     emberAfSendImmediateDefaultResponse(status);
     return true;
@@ -232,7 +313,7 @@ bool emberAfOnOffClusterOnWithRecallGlobalSceneCallback(chip::app::Command * com
 {
     EmberAfStatus status;
     bool globalSceneControl;
-    uint8_t endpoint = emberAfCurrentEndpoint();
+    EndpointId endpoint = emberAfCurrentEndpoint();
 
     status = readGlobalSceneControl(endpoint, &globalSceneControl);
     if (status != EMBER_ZCL_STATUS_SUCCESS)
@@ -285,7 +366,7 @@ bool emberAfOnOffClusterOnWithTimedOffCallback(chip::app::Command * commandObj, 
     EmberAfStatus status;
     uint16_t onTimeAttribute, offWaitTimeAttribute;
     bool onOffAttribute;
-    uint8_t endpoint = emberAfCurrentEndpoint();
+    EndpointId endpoint = emberAfCurrentEndpoint();
 
     // The valid range of the OnTime and OffWaitTime fields is 0x0000 to 0xFFFF.
     if (onTime == 0xFFFF || offWaitTime == 0xFFFF)
@@ -392,7 +473,7 @@ EmberAfStatus emberAfPluginZllOnOffServerOnZllExtensions(const EmberAfClusterCom
     // On receipt of the on command, if the value of the OnTime attribute is
     // equal to 0x0000, the device shall set the OffWaitTime attribute to 0x0000.
     uint16_t onTime;
-    uint8_t endpoint     = cmd->apsFrame->destinationEndpoint;
+    EndpointId endpoint     = cmd->apsFrame->destinationEndpoint;
     EmberAfStatus status = readOnTime(endpoint, &onTime);
     if (status != EMBER_ZCL_STATUS_SUCCESS)
     {
@@ -425,7 +506,7 @@ EmberAfStatus emberAfPluginZllOnOffServerToggleZllExtensions(const EmberAfCluste
     // receiption of a command which causes the OnOff attribute to be set to
     // true, e.g. ZCL toggle command
     bool onOff;
-    uint8_t endpoint     = cmd->apsFrame->destinationEndpoint;
+    EndpointId endpoint     = cmd->apsFrame->destinationEndpoint;
     EmberAfStatus status = readOnOff(endpoint, &onOff);
     if (status != EMBER_ZCL_STATUS_SUCCESS)
     {
@@ -479,5 +560,41 @@ EmberAfStatus emberAfPluginZllOnOffServerLevelControlZllExtensions(uint8_t endpo
             status = writeOffWaitTime(endpoint, 0x0000);
         }
         return status;
+    }
+}
+
+EmberAfStatus emberAfPluginZllOnOffServerOffWithEffectCallback(chip::EndpointId endpoint, uint8_t effectId, uint8_t effectVariant)
+{
+    OffWithEffectState = true;
+    meffectId = effectId;
+    meffectVariant = effectVariant;
+    emberAfReadServerAttribute(endpoint, ZCL_LEVEL_CONTROL_CLUSTER_ID, ZCL_CURRENT_LEVEL_ATTRIBUTE_ID, &(mCurrentLevel),
+                               sizeof(mCurrentLevel));
+    mStartLevel = mCurrentLevel;
+    if (effectId == 0 && effectVariant == 0)//Fade to Off in 0.8 seconds
+    {
+        mRemainDs = 8;
+        mTargetLevel = 0;
+        return UpdateAndSchedule(endpoint);
+    }
+    else if (effectId == 0 && effectVariant == 1) // No Fade
+    {
+        return FinishEffectOff(endpoint);
+    }
+    else if (effectId == 0 && effectVariant == 2) // 50% dim down in 0.8 seconds then fade to off in 12 seconds
+    {
+        mRemainDs = 8;
+        mTargetLevel = mCurrentLevel / 2;
+        return UpdateAndSchedule(endpoint);
+    }
+    else if (effectId == 1 && effectVariant == 0) // 20% dim up in 0.5s then fade to off in 1 second
+    {
+        mRemainDs = 5;
+        mTargetLevel = mCurrentLevel < 213 ? (uint16_t)(mCurrentLevel) * 6 / 5 : 255;
+        return UpdateAndSchedule(endpoint);
+    }
+    else //Reserved
+    {
+       return EMBER_ZCL_STATUS_INVALID_VALUE;
     }
 }

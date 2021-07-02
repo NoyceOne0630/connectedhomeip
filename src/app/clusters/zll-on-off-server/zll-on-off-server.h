@@ -51,7 +51,12 @@
  * applicable to Source Code.
  *
  ******************************************************************************/
+#pragma once
 
+#include <app/util/af-types.h>
+#include <app/util/basic-types.h>
+
+EmberAfStatus emberAfPluginZllOnOffServerOffWithEffectCallback(chip::EndpointId endpoint, uint8_t effectId, uint8_t effectVariant);
 EmberAfStatus emberAfPluginZllOnOffServerOffZllExtensions(const EmberAfClusterCommand * cmd);
 EmberAfStatus emberAfPluginZllOnOffServerOnZllExtensions(const EmberAfClusterCommand * cmd);
 EmberAfStatus emberAfPluginZllOnOffServerToggleZllExtensions(const EmberAfClusterCommand * cmd);

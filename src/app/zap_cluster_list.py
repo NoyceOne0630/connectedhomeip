@@ -42,7 +42,7 @@ SERVER_CLUSTERS: typing.Dict[str, typing.List[str]] = {
     'MEDIA_PLAYBACK_CLUSTER': ['media-playback-server'],
     'NETWORK_COMMISSIONING_CLUSTER': ['network-commissioning'],
     'OCCUPANCY_SENSING_CLUSTER': ['occupancy-sensor-server'],
-    'ON_OFF_CLUSTER': ['on-off-server'],
+    'ON_OFF_CLUSTER': ['on-off-server', 'zll-on-off-server'],
     'OPERATIONAL_CREDENTIALS_CLUSTER': ['operational-credentials-server'],
     'OTA_BOOTLOAD_CLUSTER': [],
     'OTA_PROVIDER_CLUSTER': ['ota-provider'],
