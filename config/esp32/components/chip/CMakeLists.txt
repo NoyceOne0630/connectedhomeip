@@ -31,10 +31,6 @@ endif()
 
 set(CHIP_REQURIE_COMPONENTS freertos lwip bt mdns mbedtls fatfs)
 
-if (CONFIG_ENABLE_CHIP_SHELL)
-    list(APPEND CHIP_REQURIE_COMPONENTS console)
-endif()
-
 if (CONFIG_OPENTHREAD_ENABLED)
     list(APPEND CHIP_REQURIE_COMPONENTS openthread)
 endif()
@@ -168,7 +164,8 @@ idf_component_get_property(freertos_dir freertos COMPONENT_DIR)
 # ESP-IDF components usually need 'freertos/<header.h>', while
 # CHIP might include do 'header.h'.
 target_include_directories(${COMPONENT_LIB} PRIVATE
-    "${freertos_dir}/include/freertos")
+    "${freertos_dir}/include/freertos"
+    "${freertos_dir}/FreeRTOS-Kernel/include/freertos")
 
 target_include_directories(${COMPONENT_LIB} INTERFACE
     "${CHIP_ROOT}/src/platform/ESP32"
