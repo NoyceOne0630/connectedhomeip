@@ -89,7 +89,7 @@ void __attribute__((weak)) MatterDiagnosticLogsPluginClientInitCallback(){};
 void __attribute__((weak)) MatterDiagnosticLogsPluginServerInitCallback(){};
 
 void __attribute__((weak)) MatterGeneralDiagnosticsPluginClientInitCallback(){};
-void __attribute__((weak)) MatterGeneralDiagnosticsPluginServerInitCallback(){};
+void MatterGeneralDiagnosticsPluginServerInitCallback();
 
 void __attribute__((weak)) MatterSoftwareDiagnosticsPluginClientInitCallback(){};
 void __attribute__((weak)) MatterSoftwareDiagnosticsPluginServerInitCallback(){};

@@ -86,6 +86,8 @@ private:
     CHIP_ERROR _Init(void);
     void _OnPlatformEvent(const ChipDeviceEvent * event);
 
+    CHIP_ERROR _GetNetworkInterfaces(NetworkInterface ** netifpp);
+    void _ReleaseNetworkInterfaces(NetworkInterface * netifp);
 #if CHIP_DEVICE_CONFIG_ENABLE_WIFI
     using Flags = GenericConnectivityManagerImpl_WiFi::ConnectivityFlags;
     // ===== Members that implement the ConnectivityManager abstract interface.
@@ -125,7 +127,7 @@ private:
     CHIP_ERROR _GetWiFiPacketUnicastTxCount(uint32_t & packetUnicastTxCount);
     CHIP_ERROR _GetWiFiCurrentMaxRate(uint64_t & currentMaxRate);
     CHIP_ERROR _GetWiFiOverrunCount(uint64_t & overrunCount);
-
+    CHIP_ERROR _ResetWiFiNetworkDiagnosticsCounts();
     // ===== Members for internal use by the following friends.
 
     friend ConnectivityManager & ConnectivityMgr(void);
