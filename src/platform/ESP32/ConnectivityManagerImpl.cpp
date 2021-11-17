@@ -71,6 +71,50 @@ void ConnectivityManagerImpl::_OnPlatformEvent(const ChipDeviceEvent * event)
 }
 
 #if CHIP_DEVICE_CONFIG_ENABLE_WIFI
+uint8_t MapAuthModeToSecurityType(wifi_auth_mode_t authmode)
+{
+    switch (authmode)
+    {
+    case WIFI_AUTH_WEP:
+        return 1;
+    case WIFI_AUTH_WPA_PSK:
+        return 2;
+    case WIFI_AUTH_WPA2_PSK:
+        return 3;
+    case WIFI_AUTH_WPA3_PSK:
+        return 4;
+    default:
+        return 0;
+    }
+}
+
+uint8_t GetWiFiVersionFromAPRecord(wifi_ap_record_t ap_info)
+{
+    if (ap_info.phy_11n)
+        return 4; // WiFi Version 4
+    else if (ap_info.phy_11g)
+        return 3; // WiFi Version 3
+    else if (ap_info.phy_11b)
+        return 1; // WiFi Version 1
+    else
+        return 0; // ESP Platform doesn't support 5G Hz WiFi Version (WiFi 5 & WiFi 2)
+}
+
+CHIP_ERROR ConnectivityManagerImpl::_GetWiFiBssid(ByteSpan& Bssid)
+{
+    static uint8_t wifi_bssid[6];
+    wifi_ap_record_t ap_info;
+    esp_err_t err;
+
+    err = esp_wifi_sta_get_ap_info(&ap_info);
+    if (err == ESP_OK)
+    {
+        memcpy(wifi_bssid, ap_info.bssid, 6);
+    }
+    Bssid = wifi_bssid;
+    return CHIP_NO_ERROR;
+}
+
 CHIP_ERROR ConnectivityManagerImpl::_GetWiFiSecurityType(uint8_t & securityType)
 {
     securityType = 0;
@@ -80,7 +124,20 @@ CHIP_ERROR ConnectivityManagerImpl::_GetWiFiSecurityType(uint8_t & securityType)
     err = esp_wifi_sta_get_ap_info(&ap_info);
     if (err == ESP_OK)
     {
-        securityType = ap_info.authmode;
+        securityType = MapAuthModeToSecurityType(ap_info.authmode);
+    }
+    return CHIP_NO_ERROR;
+}
+
+CHIP_ERROR ConnectivityManagerImpl::_GetWiFiVersion(uint8_t & wifiVersion)
+{
+    wifiVersion = 0;
+    wifi_ap_record_t ap_info;
+    esp_err_t err;
+    err = esp_wifi_sta_get_ap_info(&ap_info);
+    if (err == ESP_OK)
+    {
+        wifiVersion = GetWiFiVersionFromAPRecord(ap_info);
     }
     return CHIP_NO_ERROR;
 }

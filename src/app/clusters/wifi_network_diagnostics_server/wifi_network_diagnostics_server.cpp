@@ -67,6 +67,19 @@ CHIP_ERROR WiFiDiagosticsAttrAccess::ReadIfSupported(CHIP_ERROR (ConnectivityMan
     return aEncoder.Encode(data);
 }
 
+template <>
+CHIP_ERROR WiFiDiagosticsAttrAccess::ReadIfSupported(CHIP_ERROR (ConnectivityManager::*getter)(ByteSpan &),
+                                                                 AttributeValueEncoder & aEncoder)
+{
+    ByteSpan data;
+    CHIP_ERROR err = (DeviceLayer::ConnectivityMgr().*getter)(data);
+    if (err != CHIP_NO_ERROR)
+    {
+        return err;
+    }
+    return aEncoder.Encode(data);
+}
+
 WiFiDiagosticsAttrAccess gAttrAccess;
 
 CHIP_ERROR WiFiDiagosticsAttrAccess::Read(const ConcreteAttributePath & aPath, AttributeValueEncoder & aEncoder)
@@ -79,6 +92,9 @@ CHIP_ERROR WiFiDiagosticsAttrAccess::Read(const ConcreteAttributePath & aPath, A
 
     switch (aPath.mAttributeId)
     {
+    case Attributes::Bssid::Id: {
+        return ReadIfSupported(&ConnectivityManager::GetWiFiBssid, aEncoder);
+    }
     case Attributes::SecurityType::Id: {
         return ReadIfSupported(&ConnectivityManager::GetWiFiSecurityType, aEncoder);
     }
