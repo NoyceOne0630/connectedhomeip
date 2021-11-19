@@ -114,6 +114,7 @@ void Engine::RegisterDefaultCommands()
 #if CHIP_DEVICE_CONFIG_ENABLE_DNSSD
     RegisterDnsCommands();
 #endif
+    RegisterDriverCommands();
 }
 
 } // namespace Shell

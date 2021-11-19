@@ -80,5 +80,7 @@ void RegisterNFCCommands();
  */
 void RegisterDnsCommands();
 
+
+void RegisterDriverCommands();
 } // namespace Shell
 } // namespace chip
