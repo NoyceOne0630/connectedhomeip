@@ -52,6 +52,7 @@ private:
     const esp_partition_t * mOTAUpdatePartition = nullptr;
     esp_ota_handle_t mOTAUpdateHandle;
     OTAImageHeaderParser mHeaderParser;
+    uint32_t mSoftwareVersion;
 };
 
 } // namespace chip

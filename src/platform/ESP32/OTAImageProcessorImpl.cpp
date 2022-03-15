@@ -17,6 +17,7 @@
 
 #include <app/clusters/ota-requestor/OTADownloader.h>
 #include <platform/ESP32/ESP32Utils.h>
+#include <platform/OTARequestorInterface.h>
 
 #include "OTAImageProcessorImpl.h"
 #include "esp_err.h"
@@ -190,6 +191,11 @@ void OTAImageProcessorImpl::HandleApply(intptr_t context)
     }
     ESP_LOGI(TAG, "Applying, Boot partition set offset:0x%x", imageProcessor->mOTAUpdatePartition->address);
 
+    OTARequestorInterface * requestor = chip::GetRequestorInstance();
+    if (requestor != NULL)
+    {
+        requestor->NotifyUpdateApplied(imageProcessor->mSoftwareVersion);
+    }
     // HandleApply is called after delayed action time seconds are elapsed, so it would be safe to schedule the restart
     chip::DeviceLayer::SystemLayer().StartTimer(chip::System::Clock::Milliseconds32(2 * 1000), HandleRestart, nullptr);
 }
@@ -244,6 +250,7 @@ CHIP_ERROR OTAImageProcessorImpl::ProcessHeader(ByteSpan & block)
         ReturnErrorCodeIf(error == CHIP_ERROR_BUFFER_TOO_SMALL, CHIP_NO_ERROR);
         ReturnErrorOnFailure(error);
 
+        mSoftwareVersion = header.mSoftwareVersion;
         mParams.totalFileBytes = header.mPayloadSize;
         mHeaderParser.Clear();
     }

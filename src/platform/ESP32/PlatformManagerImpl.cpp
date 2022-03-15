@@ -179,6 +179,7 @@ void PlatformManagerImpl::HandleESPSystemEvent(void * arg, esp_event_base_t even
             break;
         }
     }
+#if CHIP_DEVICE_CONFIG_ENABLE_WIFI
     else if (eventBase == WIFI_EVENT)
     {
         switch (eventId)
@@ -223,6 +224,7 @@ void PlatformManagerImpl::HandleESPSystemEvent(void * arg, esp_event_base_t even
             break;
         }
     }
+#endif
 
     sInstance.PostEventOrDie(&event);
 }

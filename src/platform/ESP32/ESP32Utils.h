@@ -18,6 +18,7 @@
  */
 
 #pragma once
+#include <esp_wifi_types.h>
 
 #include "platform/internal/DeviceNetworkInfo.h"
 #include <platform/internal/CHIPDeviceLayerInternal.h>

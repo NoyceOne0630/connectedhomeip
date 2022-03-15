@@ -28,6 +28,7 @@
 #include <platform/CHIPDeviceEvent.h>
 
 #include <esp_event.h>
+#include <esp_netif_types.h>
 
 namespace chip {
 namespace DeviceLayer {
@@ -60,6 +61,7 @@ struct ChipDevicePlatformEvent final
                 ip_event_got_ip_t IpGotIp;
                 ip_event_got_ip6_t IpGotIp6;
                 ip_event_ap_staipassigned_t IpApStaIpAssigned;
+#if CHIP_DEVICE_CONFIG_ENABLE_WIFI
                 wifi_event_sta_scan_done_t WiFiStaScanDone;
                 wifi_event_sta_connected_t WiFiStaConnected;
                 wifi_event_sta_disconnected_t WiFiStaDisconnected;
@@ -69,6 +71,7 @@ struct ChipDevicePlatformEvent final
                 wifi_event_ap_staconnected_t WiFiApStaConnected;
                 wifi_event_ap_stadisconnected_t WiFiApStaDisconnected;
                 wifi_event_ap_probe_req_rx_t WiFiApProbeReqRecved;
+#endif
             } Data;
         } ESPSystemEvent;
     };
