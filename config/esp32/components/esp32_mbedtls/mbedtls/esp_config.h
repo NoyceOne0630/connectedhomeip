@@ -32,7 +32,7 @@
 #ifndef ESP_CONFIG_H
 #define ESP_CONFIG_H
 
-#include "mbedtls/config.h"
+#include "mbedtls/build_info.h"
 #include "sdkconfig.h"
 
 /**
