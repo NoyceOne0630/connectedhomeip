@@ -30,19 +30,6 @@ if [ -z "$app" ]; then
     exit 1
 fi
 
-if [ "$sdkconfig_name" == "sdkconfig.defaults.esp32h2" ]; then
-    pushd .
-    cd "$IDF_PATH"
-    git fetch origin master
-    git checkout 10f3aba770
-    git submodule update --init --recursive
-    ./install.sh
-    . ./export.sh
-    popd
-else
-    source "$IDF_PATH/export.sh"
-fi
-
 source "scripts/activate.sh"
 # shellcheck source=/dev/null
 
@@ -58,7 +45,6 @@ rm -f "$root"/sdkconfig
 (
     cd "$root"
     if [ "$idf_target" == "esp32h2" ]; then
-        pip install pyparsing==3.0.7
         idf.py --preview set-target "$idf_target"
     else
         idf.py set-target "$idf_target"
