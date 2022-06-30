@@ -152,7 +152,10 @@ CHIP_ERROR BLEManagerImpl::_Init()
     mFlags.ClearAll().Set(Flags::kAdvertisingEnabled, CHIP_DEVICE_CONFIG_CHIPOBLE_ENABLE_ADVERTISING_AUTOSTART);
     mFlags.Set(Flags::kFastAdvertisingEnabled, true);
     mNumGAPCons = 0;
-    memset(mCons, 0, sizeof(mCons));
+    for (uint8_t i = 0; i < kMaxConnections; ++i)
+    {
+        mCons[i].Reset();
+    }
     mServiceMode = ConnectivityManager::kCHIPoBLEServiceMode_Enabled;
     memset(mDeviceName, 0, sizeof(mDeviceName));
 

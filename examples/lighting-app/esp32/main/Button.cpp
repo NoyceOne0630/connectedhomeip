@@ -1,3 +1,4 @@
+#include <esp_attr.h>
 #include "Button.h"
 
 #define GPIO_INPUT_IO_0 9
