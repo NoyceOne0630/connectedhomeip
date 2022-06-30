@@ -341,8 +341,9 @@ CHIP_ERROR ESP32Config::ClearConfigValue(Key key)
 
 bool ESP32Config::ConfigValueExists(Key key)
 {
-    nvs_iterator_t iterator = nvs_entry_find(NVS_DEFAULT_PART_NAME, key.Namespace, NVS_TYPE_ANY);
-    for (; iterator; iterator = nvs_entry_next(iterator))
+    nvs_iterator_t iterator = NULL;
+    esp_err_t err = nvs_entry_find(NVS_DEFAULT_PART_NAME, key.Namespace, NVS_TYPE_ANY, &iterator);
+    for (; iterator && err == ESP_OK; err = nvs_entry_next(&iterator))
     {
         nvs_entry_info_t info;
         nvs_entry_info(iterator, &info);
