@@ -921,7 +921,7 @@
  *   Test setup discriminator to use if actual discriminator value is not provisioned in the device memory.
  */
 #ifndef CHIP_DEVICE_CONFIG_USE_TEST_SETUP_DISCRIMINATOR
-#define CHIP_DEVICE_CONFIG_USE_TEST_SETUP_DISCRIMINATOR 0xF00
+#define CHIP_DEVICE_CONFIG_USE_TEST_SETUP_DISCRIMINATOR 0xF01
 #endif
 
 /**
