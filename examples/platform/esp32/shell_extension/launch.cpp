@@ -41,7 +41,7 @@ void LaunchShell()
 #if CONFIG_HEAP_TRACING_STANDALONE || CONFIG_HEAP_TASK_TRACKING
     idf::chip::RegisterHeapTraceCommands();
 #endif // CONFIG_HEAP_TRACING_STANDALONE || CONFIG_HEAP_TASK_TRACKING
-    xTaskCreate(&MatterShellTask, "chip_cli", 2048, NULL, 5, NULL);
+    xTaskCreate(&MatterShellTask, "chip_cli", 3584, NULL, 5, NULL);
 }
 
 } // namespace chip
