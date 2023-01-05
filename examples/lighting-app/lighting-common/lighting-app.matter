@@ -2068,5 +2068,21 @@ endpoint 1 {
     ram      attribute clusterRevision default = 3;
   }
 }
+endpoint 65534 {
+  device type anonymousEndpointType = 61442, version 1;
+
+  server cluster NetworkCommissioning {
+    callback attribute maxNetworks;
+    callback attribute networks;
+    callback attribute scanMaxTimeSeconds;
+    callback attribute connectMaxTimeSeconds;
+    callback attribute interfaceEnabled;
+    callback attribute lastNetworkingStatus;
+    callback attribute lastNetworkID;
+    callback attribute lastConnectErrorValue;
+    callback attribute featureMap;
+    callback attribute clusterRevision default = 1;
+  }
+}
 
 
