@@ -409,6 +409,19 @@ CHIP_ERROR CHIPCommand::InitializeCommissioner(const CommissionerIdentity & iden
         //        store the credentials in persistent storage, and
         //        generate when not available in the storage.
         ReturnLogErrorOnFailure(mCommissionerStorage.Init(identity.mName.c_str()));
+        if (mCASEAuthTags.HasValue())
+        {
+            chip::CATValues cats;
+            if (mCASEAuthTags.Value().size() > chip::kMaxSubjectCATAttributeCount)
+            {
+                ReturnLogErrorOnFailure(CHIP_ERROR_BUFFER_TOO_SMALL);
+            }
+            for (size_t index = 0; index < mCASEAuthTags.Value().size(); ++index)
+            {
+                cats.values[index] = mCASEAuthTags.Value()[index];
+            }
+            mCommissionerStorage.SetCommissionerCATs(cats);
+        }
         if (mUseMaxSizedCerts.HasValue())
         {
             auto option = CredentialIssuerCommands::CredentialIssuerOptions::kMaximizeCertificateSizes;

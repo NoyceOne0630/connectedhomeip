@@ -320,7 +320,7 @@ CHIP_ERROR ExampleOperationalCredentialsIssuer::GenerateNOCChainAfterValidation(
 CHIP_ERROR ExampleOperationalCredentialsIssuer::GenerateNOCChain(const ByteSpan & csrElements, const ByteSpan & csrNonce,
                                                                  const ByteSpan & attestationSignature,
                                                                  const ByteSpan & attestationChallenge, const ByteSpan & DAC,
-                                                                 const ByteSpan & PAI,
+                                                                 const ByteSpan & PAI, const CATValues & cats,
                                                                  Callback::Callback<OnNOCChainGeneration> * onCompletion)
 {
     VerifyOrReturnError(mInitialized, CHIP_ERROR_WELL_UNINITIALIZED);
@@ -374,7 +374,7 @@ CHIP_ERROR ExampleOperationalCredentialsIssuer::GenerateNOCChain(const ByteSpan 
     MutableByteSpan rcacSpan(rcac.Get(), kMaxDERCertLength);
 
     ReturnErrorOnFailure(
-        GenerateNOCChainAfterValidation(assignedId, mNextFabricId, chip::kUndefinedCATs, pubkey, rcacSpan, icacSpan, nocSpan));
+        GenerateNOCChainAfterValidation(assignedId, mNextFabricId, cats, pubkey, rcacSpan, icacSpan, nocSpan));
 
     // TODO(#13825): Should always generate some IPK. Using a temporary fixed value until APIs are plumbed in to set it end-to-end
     // TODO: Force callers to set IPK if used before GenerateNOCChain will succeed.
@@ -393,8 +393,20 @@ CHIP_ERROR ExampleOperationalCredentialsIssuer::GenerateNOCChain(const ByteSpan 
 
     // Callback onto commissioner.
     ChipLogProgress(Controller, "Providing certificate chain to the commissioner");
+    NodeId adminSubject = kUndefinedNodeId;
+    if (cats.GetNumTagsPresent() > 0 && cats.AreValid())
+    {
+        for (auto cat : cats.values)
+        {
+            if (cat != kUndefinedCAT)
+            {
+                adminSubject = NodeIdFromCASEAuthTag(cat);
+                break;
+            }
+        }
+    }
     onCompletion->mCall(onCompletion->mContext, CHIP_NO_ERROR, nocSpan, icacSpan, rcacSpan, MakeOptional(ipkSpan),
-                        Optional<NodeId>());
+                        adminSubject == kUndefinedNodeId ? Optional<NodeId>() : MakeOptional(adminSubject));
     return CHIP_NO_ERROR;
 }
 

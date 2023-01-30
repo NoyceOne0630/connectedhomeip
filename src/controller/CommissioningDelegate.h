@@ -425,6 +425,13 @@ public:
         return *this;
     }
 
+    Optional<CATValues> GetCASEAuthTags() const { return mCASEAuthTags; }
+    CommissioningParameters & SetCASEAuthTags(CATValues catValues)
+    {
+        mCASEAuthTags = MakeOptional(catValues);
+        return *this;
+    }
+
     // Clear all members that depend on some sort of external buffer.  Can be
     // used to make sure that we are not holding any dangling pointers.
     void ClearExternalBufferDependentValues()
@@ -477,6 +484,7 @@ private:
     Optional<bool> mAttemptWiFiNetworkScan;
     Optional<bool> mAttemptThreadNetworkScan; // This automatically gets set to false when a ThreadOperationalDataset is set
     Optional<bool> mSkipCommissioningComplete;
+    Optional<CATValues> mCASEAuthTags;
     bool mCheckForMatchingFabric = false;
 };
 

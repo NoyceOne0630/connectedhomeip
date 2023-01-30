@@ -831,9 +831,10 @@ private:
      * @param[in] dac               device attestation certificate
      * @param[in] pai               Product Attestation Intermediate certificate
      * @param[in] csrNonce          certificate signing request nonce
+     * @param[in] cats              CASE Authenticated Tags
      */
     CHIP_ERROR ProcessCSR(DeviceProxy * proxy, const ByteSpan & NOCSRElements, const ByteSpan & AttestationSignature,
-                          const ByteSpan & dac, const ByteSpan & pai, const ByteSpan & csrNonce);
+                          const ByteSpan & dac, const ByteSpan & pai, const ByteSpan & csrNonce, const CATValues & cats);
 
     /**
      * @brief

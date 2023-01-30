@@ -1267,7 +1267,7 @@ void DeviceCommissioner::OnDeviceNOCChainGeneration(void * context, CHIP_ERROR s
     // TODO - Verify that the generated root cert matches with commissioner's root cert
     CommissioningDelegate::CommissioningReport report;
     report.Set<NocChain>(NocChain(noc, icac, rcac, ipk.HasValue() ? ipk.Value() : IdentityProtectionKeySpan(placeHolderIpk),
-                                  adminSubject.HasValue() ? adminSubject.Value() : commissioner->GetNodeId()));
+                                  adminSubject.ValueOr(commissioner->GetNodeId())));
     commissioner->CommissioningStageComplete(status, report);
 }
 
@@ -1289,12 +1289,12 @@ CHIP_ERROR DeviceCommissioner::IssueNOCChain(const ByteSpan & NOCSRElements, Nod
     // Note: we don't have attestationSignature, attestationChallenge, DAC, PAI so we are just providing an empty ByteSpan
     // for those arguments.
     return mOperationalCredentialsDelegate->GenerateNOCChain(NOCSRElements, ByteSpan(), ByteSpan(), ByteSpan(), ByteSpan(),
-                                                             ByteSpan(), callback);
+                                                             ByteSpan(), chip::kUndefinedCATs, callback);
 }
 
 CHIP_ERROR DeviceCommissioner::ProcessCSR(DeviceProxy * proxy, const ByteSpan & NOCSRElements,
                                           const ByteSpan & AttestationSignature, const ByteSpan & dac, const ByteSpan & pai,
-                                          const ByteSpan & csrNonce)
+                                          const ByteSpan & csrNonce, const CATValues & cats)
 {
     MATTER_TRACE_EVENT_SCOPE("ProcessOpCSR", "DeviceCommissioner");
     VerifyOrReturnError(mState == State::Initialized, CHIP_ERROR_INCORRECT_STATE);
@@ -1316,7 +1316,7 @@ CHIP_ERROR DeviceCommissioner::ProcessCSR(DeviceProxy * proxy, const ByteSpan & 
     }
 
     return mOperationalCredentialsDelegate->GenerateNOCChain(NOCSRElements, csrNonce, AttestationSignature, attestationChallenge,
-                                                             dac, pai, &mDeviceNOCChainCallback);
+                                                             dac, pai, cats, &mDeviceNOCChainCallback);
 }
 
 CHIP_ERROR DeviceCommissioner::SendOperationalCertificate(DeviceProxy * device, const ByteSpan & nocCertBuf,
@@ -2325,9 +2325,10 @@ void DeviceCommissioner::PerformCommissioningStep(DeviceProxy * proxy, Commissio
             ChipLogError(Controller, "Unable to generate NOC chain parameters");
             return CommissioningStageComplete(CHIP_ERROR_INVALID_ARGUMENT);
         }
-        CHIP_ERROR err = ProcessCSR(proxy, params.GetNOCChainGenerationParameters().Value().nocsrElements,
-                                    params.GetNOCChainGenerationParameters().Value().signature, params.GetDAC().Value(),
-                                    params.GetPAI().Value(), params.GetCSRNonce().Value());
+        CHIP_ERROR err =
+            ProcessCSR(proxy, params.GetNOCChainGenerationParameters().Value().nocsrElements,
+                       params.GetNOCChainGenerationParameters().Value().signature, params.GetDAC().Value(), params.GetPAI().Value(),
+                       params.GetCSRNonce().Value(), params.GetCASEAuthTags().ValueOr(chip::kUndefinedCATs));
         if (err != CHIP_NO_ERROR)
         {
             ChipLogError(Controller, "Unable to process Op CSR");

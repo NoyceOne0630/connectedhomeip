@@ -76,7 +76,10 @@ CommissioningParameters PairingCommand::GetCommissioningParameters()
     {
         params.SetDeviceAttestationDelegate(this);
     }
-
+    if (mCommissionerStorage.GetCommissionerCATs() != chip::kUndefinedCATs)
+    {
+        params.SetCASEAuthTags(mCommissionerStorage.GetCommissionerCATs());
+    }
     switch (mNetworkType)
     {
     case PairingNetworkType::WiFi:

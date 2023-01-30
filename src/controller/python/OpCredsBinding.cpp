@@ -81,10 +81,10 @@ public:
 private:
     CHIP_ERROR GenerateNOCChain(const ByteSpan & csrElements, const ByteSpan & csrNonce, const ByteSpan & attestationSignature,
                                 const ByteSpan & attestationChallenge, const ByteSpan & DAC, const ByteSpan & PAI,
-                                Callback::Callback<OnNOCChainGeneration> * onCompletion) override
+                                const CATValues & cats, Callback::Callback<OnNOCChainGeneration> * onCompletion) override
     {
         return mExampleOpCredsIssuer.GenerateNOCChain(csrElements, csrNonce, attestationSignature, attestationChallenge, DAC, PAI,
-                                                      onCompletion);
+                                                      cats, onCompletion);
     }
 
     void SetNodeIdForNextNOCRequest(NodeId nodeId) override { mExampleOpCredsIssuer.SetNodeIdForNextNOCRequest(nodeId); }

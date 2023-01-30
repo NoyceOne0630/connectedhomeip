@@ -50,7 +50,7 @@ public:
 
     CHIP_ERROR GenerateNOCChain(const ByteSpan & csrElements, const ByteSpan & csrNonce, const ByteSpan & attestationSignature,
                                 const ByteSpan & attestationChallenge, const ByteSpan & DAC, const ByteSpan & PAI,
-                                Callback::Callback<OnNOCChainGeneration> * onCompletion) override;
+                                const CATValues & cats, Callback::Callback<OnNOCChainGeneration> * onCompletion) override;
 
     CHIP_ERROR NOCChainGenerated(CHIP_ERROR status, const ByteSpan & noc, const ByteSpan & icac, const ByteSpan & rcac,
                                  Optional<Crypto::IdentityProtectionKeySpan> ipk, Optional<NodeId> adminSubject);

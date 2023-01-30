@@ -85,6 +85,7 @@ public:
         AddArgument("trace_decode", 0, 1, &mTraceDecode);
 #endif // CHIP_CONFIG_TRANSPORT_TRACE_ENABLED
         AddArgument("ble-adapter", 0, UINT16_MAX, &mBleAdapterId);
+        AddArgument("case-auth-tag", 1, UINT32_MAX, &mCASEAuthTags);
     }
 
     /////////// Command Interface /////////
@@ -183,6 +184,7 @@ private:
     chip::Optional<char *> mCDTrustStorePath;
     chip::Optional<bool> mUseMaxSizedCerts;
     chip::Optional<bool> mOnlyAllowTrustedCdKeys;
+    chip::Optional<std::vector<uint32_t>> mCASEAuthTags;
 
     // Cached trust store so commands other than the original startup command
     // can spin up commissioners as needed.
