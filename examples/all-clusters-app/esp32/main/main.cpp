@@ -21,7 +21,6 @@
 #include "DeviceCallbacks.h"
 #include "Globals.h"
 #include "LEDWidget.h"
-#include "OpenThreadLaunch.h"
 #include "QRCodeScreen.h"
 #include "ShellCommands.h"
 #include "WiFiWidget.h"
@@ -112,7 +111,9 @@ static void InitServer(intptr_t context)
     Esp32AppServer::Init(&sCallbacks); // Init ZCL Data Model and CHIP App Server AND Initialize device attestation config
 
     // We only have network commissioning on endpoint 0.
+#if !CONFIG_IDF_TARGET_ESP32C6
     emberAfEndpointEnableDisable(kNetworkCommissioningEndpointSecondary, false);
+#endif
 
     InitBindingHandlers();
 
@@ -150,11 +151,6 @@ extern "C" void app_main()
     CASECommands::GetInstance().Register();
 #endif // CONFIG_ENABLE_CHIP_SHELL
 
-#if CONFIG_OPENTHREAD_ENABLED
-    LaunchOpenThread();
-    ThreadStackMgr().InitThreadStack();
-#endif
-
     DeviceLayer::SetDeviceInfoProvider(&gExampleDeviceInfoProvider);
 
     CHIPDeviceManager & deviceMgr = CHIPDeviceManager::GetInstance();
@@ -175,6 +171,19 @@ extern "C" void app_main()
 #else
     SetDeviceAttestationCredentialsProvider(Examples::GetExampleDACProvider());
 #endif // CONFIG_ENABLE_ESP32_FACTORY_DATA_PROVIDER
+
+#if CHIP_DEVICE_CONFIG_ENABLE_THREAD
+    if (chip::DeviceLayer::ThreadStackMgr().InitThreadStack() != CHIP_NO_ERROR)
+    {
+        ESP_LOGE(TAG, "Failed to initialize Thread stack");
+        return;
+    }
+    if (chip::DeviceLayer::ThreadStackMgr().StartThreadTask() != CHIP_NO_ERROR)
+    {
+        ESP_LOGE(TAG, "Failed to launch Thread task");
+        return;
+    }
+#endif
 
     ESP_LOGI(TAG, "------------------------Starting App Task---------------------------");
     error = GetAppTask().StartAppTask();

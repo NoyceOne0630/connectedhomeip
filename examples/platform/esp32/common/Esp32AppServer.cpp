@@ -34,7 +34,7 @@ static constexpr char TAG[] = "ESP32Appserver";
 namespace {
 #if CHIP_DEVICE_CONFIG_ENABLE_WIFI
 app::Clusters::NetworkCommissioning::Instance
-    sWiFiNetworkCommissioningInstance(0 /* Endpoint Id */, &(NetworkCommissioning::ESPWiFiDriver::GetInstance()));
+    sWiFiNetworkCommissioningInstance(0xFFFE /* Endpoint Id */, &(NetworkCommissioning::ESPWiFiDriver::GetInstance()));
 #endif
 
 #if CONFIG_TEST_EVENT_TRIGGER_ENABLED

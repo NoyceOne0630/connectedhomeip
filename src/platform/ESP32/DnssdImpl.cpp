@@ -37,6 +37,11 @@ static constexpr size_t kMaxResults     = 20;
 namespace chip {
 namespace Dnssd {
 
+static const char * GetProtocolString(DnssdServiceProtocol protocol)
+{
+    return protocol == DnssdServiceProtocol::kDnssdProtocolTcp ? "_tcp" : "_udp";
+}
+#if CHIP_DEVICE_CONFIG_ENABLE_WIFI
 struct MdnsQuery
 {
     GenericContext * ctx;
@@ -110,86 +115,6 @@ CHIP_ERROR RemoveMdnsQuery(GenericContext * ctx)
         chip::Platform::Delete(reinterpret_cast<ResolveContext *>(current->ctx));
     }
     chip::Platform::MemoryFree(current);
-    return CHIP_NO_ERROR;
-}
-
-CHIP_ERROR ChipDnssdInit(DnssdAsyncReturnCallback initCallback, DnssdAsyncReturnCallback errorCallback, void * context)
-{
-    CHIP_ERROR error = CHIP_NO_ERROR;
-    esp_err_t espError;
-
-    espError = mdns_init();
-    VerifyOrExit(espError == ESP_OK, error = CHIP_ERROR_INTERNAL);
-
-exit:
-    if (espError != ESP_OK)
-    {
-        ChipLogError(DeviceLayer, "esp mdns internal error: %s", esp_err_to_name(espError));
-    }
-    initCallback(context, error);
-
-    return error;
-}
-
-void ChipDnssdShutdown() {}
-
-static const char * GetProtocolString(DnssdServiceProtocol protocol)
-{
-    return protocol == DnssdServiceProtocol::kDnssdProtocolTcp ? "_tcp" : "_udp";
-}
-
-CHIP_ERROR ChipDnssdPublishService(const DnssdService * service, DnssdPublishCallback callback, void * context)
-{
-    CHIP_ERROR error        = CHIP_NO_ERROR;
-    mdns_txt_item_t * items = nullptr;
-    esp_err_t espError;
-
-    if (strcmp(service->mHostName, "") != 0)
-    {
-        VerifyOrExit(mdns_hostname_set(service->mHostName) == ESP_OK, error = CHIP_ERROR_INTERNAL);
-    }
-
-    VerifyOrExit(service->mTextEntrySize <= UINT8_MAX, error = CHIP_ERROR_INVALID_ARGUMENT);
-    if (service->mTextEntries)
-    {
-        items = static_cast<mdns_txt_item_t *>(chip::Platform::MemoryCalloc(service->mTextEntrySize, sizeof(mdns_txt_item_t)));
-        VerifyOrExit(items != nullptr, error = CHIP_ERROR_NO_MEMORY);
-        for (size_t i = 0; i < service->mTextEntrySize; i++)
-        {
-            items[i].key = service->mTextEntries[i].mKey;
-            // Unfortunately ESP mdns stack doesn't support arbitrary binary data
-            items[i].value = reinterpret_cast<const char *>(service->mTextEntries[i].mData);
-        }
-    }
-
-    espError = mdns_service_add(service->mName, service->mType, GetProtocolString(service->mProtocol), service->mPort, items,
-                                service->mTextEntrySize);
-    // The mdns_service_add will return error if we try to add an existing service
-    if (espError != ESP_OK && espError != ESP_ERR_NO_MEM)
-    {
-        espError = mdns_service_txt_set(service->mType, GetProtocolString(service->mProtocol), items,
-                                        static_cast<uint8_t>(service->mTextEntrySize));
-    }
-    VerifyOrExit(espError == ESP_OK, error = CHIP_ERROR_INTERNAL);
-
-exit:
-    if (items != nullptr)
-    {
-        chip::Platform::MemoryFree(items);
-    }
-
-    return error;
-}
-
-CHIP_ERROR ChipDnssdRemoveServices()
-{
-    mdns_service_remove("_matter", "_tcp");
-    mdns_service_remove("_matterc", "_udp");
-    return CHIP_NO_ERROR;
-}
-
-CHIP_ERROR ChipDnssdFinalizeServiceUpdate()
-{
     return CHIP_NO_ERROR;
 }
 
@@ -271,6 +196,7 @@ CHIP_ERROR OnBrowseDone(BrowseContext * ctx)
     if (ctx->mResult)
     {
         ctx->mServiceSize = GetResultSize(ctx->mResult);
+        assert(ctx->mServiceSize == ctx->mResultCount);
         if (ctx->mServiceSize > 0)
         {
             ctx->mServices = static_cast<DnssdService *>(chip::Platform::MemoryCalloc(ctx->mServiceSize, sizeof(DnssdService)));
@@ -432,7 +358,7 @@ void MdnsQueryDone(intptr_t context)
     }
     mdns_search_once_t * searchHandle = reinterpret_cast<mdns_search_once_t *>(context);
     GenericContext * ctx              = FindMdnsQuery(searchHandle);
-    if (mdns_query_async_get_results(searchHandle, kTimeoutMilli, &(ctx->mResult)))
+    if (mdns_query_async_get_results(searchHandle, kTimeoutMilli, &(ctx->mResult), &(ctx->mResultCount)))
     {
         if (ctx->mContextType == ContextType::Browse)
         {
@@ -458,7 +384,83 @@ void MdnsQueryNotifier(mdns_search_once_t * searchHandle)
     chip::DeviceLayer::PlatformMgr().ScheduleWork(MdnsQueryDone, reinterpret_cast<intptr_t>(searchHandle));
 }
 
-CHIP_ERROR ChipDnssdBrowse(const char * type, DnssdServiceProtocol protocol, chip::Inet::IPAddressType addressType,
+CHIP_ERROR ESPWiFiOrEthernetDnssdInit(DnssdAsyncReturnCallback initCallback, DnssdAsyncReturnCallback errorCallback, void * context)
+{
+    CHIP_ERROR error = CHIP_NO_ERROR;
+    esp_err_t espError;
+
+    espError = mdns_init();
+    VerifyOrExit(espError == ESP_OK, error = CHIP_ERROR_INTERNAL);
+
+exit:
+    if (espError != ESP_OK)
+    {
+        ChipLogError(DeviceLayer, "esp mdns internal error: %s", esp_err_to_name(espError));
+    }
+    initCallback(context, error);
+
+    return error;
+}
+
+CHIP_ERROR ESPWiFiOrEthernetDnssdPublishService(const DnssdService * service, DnssdPublishCallback callback, void * context)
+{
+    CHIP_ERROR error        = CHIP_NO_ERROR;
+    mdns_txt_item_t * items = nullptr;
+    esp_err_t espError;
+
+    if (strcmp(service->mHostName, "") != 0)
+    {
+        VerifyOrExit(mdns_hostname_set(service->mHostName) == ESP_OK, error = CHIP_ERROR_INTERNAL);
+    }
+
+    VerifyOrExit(service->mTextEntrySize <= UINT8_MAX, error = CHIP_ERROR_INVALID_ARGUMENT);
+    if (service->mTextEntries)
+    {
+        items = static_cast<mdns_txt_item_t *>(chip::Platform::MemoryCalloc(service->mTextEntrySize, sizeof(mdns_txt_item_t)));
+        VerifyOrExit(items != nullptr, error = CHIP_ERROR_NO_MEMORY);
+        for (size_t i = 0; i < service->mTextEntrySize; i++)
+        {
+            items[i].key = service->mTextEntries[i].mKey;
+            // Unfortunately ESP mdns stack doesn't support arbitrary binary data
+            items[i].value = reinterpret_cast<const char *>(service->mTextEntries[i].mData);
+        }
+    }
+
+    espError = mdns_service_add(service->mName, service->mType, GetProtocolString(service->mProtocol), service->mPort, items,
+                                service->mTextEntrySize);
+
+    // The mdns_service_add will return error if we try to add an existing service
+    if (espError != ESP_OK && espError != ESP_ERR_NO_MEM)
+    {
+        espError = mdns_service_txt_set(service->mType, GetProtocolString(service->mProtocol), items,
+                                        static_cast<uint8_t>(service->mTextEntrySize));
+    }
+    VerifyOrExit(espError == ESP_OK, error = CHIP_ERROR_INTERNAL);
+
+    for (size_t i = 0; i < service->mSubTypeSize; ++i)
+    {
+        espError = mdns_service_subtype_add_for_host(service->mName, service->mType, GetProtocolString(service->mProtocol), NULL,
+                                                     service->mSubTypes[i]);
+        VerifyOrExit(espError == ESP_OK, error = CHIP_ERROR_INTERNAL);
+    }
+
+exit:
+    if (items != nullptr)
+    {
+        chip::Platform::MemoryFree(items);
+    }
+
+    return error;
+}
+
+CHIP_ERROR ESPWiFiOrEthernetDnssdRemoveServices()
+{
+    mdns_service_remove("_matter", "_tcp");
+    mdns_service_remove("_matterc", "_udp");
+    return CHIP_NO_ERROR;
+}
+
+CHIP_ERROR ESPWiFiOrEthernetDnssdBrowse(const char * type, DnssdServiceProtocol protocol, chip::Inet::IPAddressType addressType,
                            chip::Inet::InterfaceId interface, DnssdBrowseCallback callback, void * context,
                            intptr_t * browseIdentifier)
 {
@@ -485,12 +487,7 @@ CHIP_ERROR ChipDnssdBrowse(const char * type, DnssdServiceProtocol protocol, chi
     return error;
 }
 
-CHIP_ERROR ChipDnssdStopBrowse(intptr_t browseIdentifier)
-{
-    return CHIP_ERROR_NOT_IMPLEMENTED;
-}
-
-CHIP_ERROR ChipDnssdResolve(DnssdService * service, chip::Inet::InterfaceId interface, DnssdResolveCallback callback,
+CHIP_ERROR ESPWiFiOrEthernetDnssdResolve(DnssdService * service, chip::Inet::InterfaceId interface, DnssdResolveCallback callback,
                             void * context)
 {
     CHIP_ERROR error                  = CHIP_NO_ERROR;
@@ -511,12 +508,209 @@ CHIP_ERROR ChipDnssdResolve(DnssdService * service, chip::Inet::InterfaceId inte
     return error;
 }
 
-void ChipDnssdResolveNoLongerNeeded(const char * instanceName) {}
+#endif // CHIP_DEVICE_CONFIG_ENABLE_WIFI
 
+#if CHIP_DEVICE_CONFIG_ENABLE_THREAD
+using namespace chip::DeviceLayer;
+CHIP_ERROR ESPThreadDnssdInit(DnssdAsyncReturnCallback initCallback, DnssdAsyncReturnCallback errorCallback, void * context)
+{
+    ReturnErrorOnFailure(ThreadStackMgr().SetSrpDnsCallbacks(initCallback, errorCallback, context));
+
+    uint8_t macBuffer[ConfigurationManager::kPrimaryMACAddressLength];
+    MutableByteSpan mac(macBuffer);
+    char hostname[kHostNameMaxLength + 1] = "";
+    ReturnErrorOnFailure(DeviceLayer::ConfigurationMgr().GetPrimaryMACAddress(mac));
+    MakeHostName(hostname, sizeof(hostname), mac);
+
+    return ThreadStackMgr().ClearSrpHost(hostname);
+}
+
+CHIP_ERROR ESPThreadDnssdPublishService(const DnssdService * service, DnssdPublishCallback callback, void * context)
+{
+#if CHIP_DEVICE_CONFIG_ENABLE_THREAD_SRP_CLIENT
+    ReturnErrorCodeIf(service == nullptr, CHIP_ERROR_INVALID_ARGUMENT);
+    if (strcmp(service->mHostName, "") != 0)
+    {
+        ReturnErrorOnFailure(ThreadStackMgr().SetupSrpHost(service->mHostName));
+    }
+
+    char serviceType[chip::Dnssd::kDnssdTypeAndProtocolMaxSize + 1];
+    snprintf(serviceType, sizeof(serviceType), "%s.%s", service->mType, GetProtocolString(service->mProtocol));
+
+    Span<const char * const> subTypes(service->mSubTypes, service->mSubTypeSize);
+    Span<const TextEntry> textEntries(service->mTextEntries, service->mTextEntrySize);
+    return ThreadStackMgr().AddSrpService(service->mName, serviceType, service->mPort, subTypes, textEntries);
+#else
+    return CHIP_ERROR_NOT_IMPLEMENTED;
+#endif // CHIP_DEVICE_CONFIG_ENABLE_THREAD_SRP_CLIENT
+}
+
+CHIP_ERROR ESPThreadDnssdRemoveServices()
+{
+#if CHIP_DEVICE_CONFIG_ENABLE_THREAD_SRP_CLIENT
+    ThreadStackMgr().InvalidateAllSrpServices();
+    return CHIP_NO_ERROR;
+#else
+    return CHIP_ERROR_NOT_IMPLEMENTED;
+#endif // CHIP_DEVICE_CONFIG_ENABLE_THREAD_SRP_CLIENT
+}
+
+CHIP_ERROR ESPThreadDnssdFinalizeServiceUpdate()
+{
+#if CHIP_DEVICE_CONFIG_ENABLE_THREAD_SRP_CLIENT
+    return ThreadStackMgr().RemoveInvalidSrpServices();
+#else
+    return CHIP_ERROR_NOT_IMPLEMENTED;
+#endif // CHIP_DEVICE_CONFIG_ENABLE_THREAD_SRP_CLIENT
+}
+
+CHIP_ERROR ESPThreadDnssdBrowse(const char * type, DnssdServiceProtocol protocol, Inet::IPAddressType addressType,
+                           Inet::InterfaceId interface, DnssdBrowseCallback callback, void * context, intptr_t * browseIdentifier)
+{
+#if CHIP_DEVICE_CONFIG_ENABLE_THREAD_SRP_CLIENT && CHIP_DEVICE_CONFIG_ENABLE_THREAD_DNS_CLIENT
+    if (type == nullptr || callback == nullptr)
+        return CHIP_ERROR_INVALID_ARGUMENT;
+
+    char serviceType[Dnssd::kDnssdFullTypeAndProtocolMaxSize + 1]; // +1 for null-terminator
+    snprintf(serviceType, sizeof(serviceType), "%s.%s", StringOrNullMarker(type), GetProtocolString(protocol));
+
+    *browseIdentifier = reinterpret_cast<intptr_t>(nullptr);
+    return ThreadStackMgr().DnsBrowse(serviceType, callback, context);
+#else
+    return CHIP_ERROR_NOT_IMPLEMENTED;
+#endif // CHIP_DEVICE_CONFIG_ENABLE_THREAD_SRP_CLIENT && CHIP_DEVICE_CONFIG_ENABLE_THREAD_DNS_CLIENT
+}
+
+CHIP_ERROR ESPThreadDnssdResolve(DnssdService * browseResult, Inet::InterfaceId interface, DnssdResolveCallback callback, void * context)
+{
+#if CHIP_DEVICE_CONFIG_ENABLE_THREAD_SRP_CLIENT && CHIP_DEVICE_CONFIG_ENABLE_THREAD_DNS_CLIENT
+    if (browseResult == nullptr || callback == nullptr)
+        return CHIP_ERROR_INVALID_ARGUMENT;
+
+    char serviceType[chip::Dnssd::kDnssdTypeAndProtocolMaxSize + 1];
+    snprintf(serviceType, sizeof(serviceType), "%s.%s", browseResult->mType, GetProtocolString(browseResult->mProtocol));
+
+    return ThreadStackMgr().DnsResolve(serviceType, browseResult->mName, callback, context);
+#else
+    return CHIP_ERROR_NOT_IMPLEMENTED;
+#endif // CHIP_DEVICE_CONFIG_ENABLE_THREAD_SRP_CLIENT && CHIP_DEVICE_CONFIG_ENABLE_THREAD_DNS_CLIENT
+}
+
+#endif // CHIP_DEVICE_CONFIG_ENABLE_THREAD
+CHIP_ERROR ChipDnssdInit(DnssdAsyncReturnCallback initCallback, DnssdAsyncReturnCallback errorCallback, void * context)
+{
+    CHIP_ERROR err = CHIP_NO_ERROR;
+#if CHIP_DEVICE_CONFIG_ENABLE_WIFI
+    err = ESPWiFiOrEthernetDnssdInit(initCallback, errorCallback, context);
+    if (err != CHIP_NO_ERROR)
+    {
+        return err;
+    }
+#endif
+#if CHIP_DEVICE_CONFIG_ENABLE_THREAD
+    return ESPThreadDnssdInit(initCallback, errorCallback, context);
+#endif
+    return err;
+}
+
+void ChipDnssdShutdown() {}
+
+CHIP_ERROR ChipDnssdPublishService(const DnssdService * service, DnssdPublishCallback callback, void * context)
+{
+    CHIP_ERROR err = CHIP_NO_ERROR;
+#if CHIP_DEVICE_CONFIG_ENABLE_WIFI
+    if (ConnectivityMgr().IsWiFiStationProvisioned())
+    {
+        err = ESPWiFiOrEthernetDnssdPublishService(service, callback, context);
+    }
+#endif
+#if CHIP_DEVICE_CONFIG_ENABLE_THREAD
+    if (ConnectivityMgr().IsThreadProvisioned())
+    {
+        return ESPThreadDnssdPublishService(service, callback, context);
+    }
+#endif
+    return err;
+
+}
+
+CHIP_ERROR ChipDnssdRemoveServices()
+{
+    CHIP_ERROR err = CHIP_NO_ERROR;
+#if CHIP_DEVICE_CONFIG_ENABLE_WIFI
+    if (ConnectivityMgr().IsWiFiStationProvisioned())
+    {
+        err = ESPWiFiOrEthernetDnssdRemoveServices();
+    }
+#endif
+#if CHIP_DEVICE_CONFIG_ENABLE_THREAD
+    if (ThreadStackMgr().IsThreadProvisioned())
+    {
+        return ESPThreadDnssdRemoveServices();
+    }
+#endif
+    return err;
+}
+
+CHIP_ERROR ChipDnssdFinalizeServiceUpdate()
+{
+#if CHIP_DEVICE_CONFIG_ENABLE_THREAD
+    if (ThreadStackMgr().IsThreadProvisioned())
+    {
+        return ESPThreadDnssdFinalizeServiceUpdate();
+    }
+#endif
+    return CHIP_NO_ERROR;
+}
+
+CHIP_ERROR ChipDnssdBrowse(const char * type, DnssdServiceProtocol protocol, Inet::IPAddressType addressType,
+                           Inet::InterfaceId interface, DnssdBrowseCallback callback, void * context, intptr_t * browseIdentifier)
+{
+    CHIP_ERROR err = CHIP_NO_ERROR;
+#if CHIP_DEVICE_CONFIG_ENABLE_WIFI
+    if (ConnectivityMgr().IsWiFiStationProvisioned())
+    {
+        err = ESPWiFiOrEthernetDnssdBrowse(type, protocol, addressType, interface, callback, context, browseIdentifier);
+    }
+#endif
+#if CHIP_DEVICE_CONFIG_ENABLE_THREAD
+    if (ThreadStackMgr().IsThreadProvisioned())
+    {
+        return ESPThreadDnssdBrowse(type, protocol, addressType, interface, callback, context, browseIdentifier);
+    }
+#endif
+    return err;
+}
+
+CHIP_ERROR ChipDnssdStopBrowse(intptr_t browseIdentifier)
+{
+    return CHIP_ERROR_NOT_IMPLEMENTED;
+}
+
+CHIP_ERROR ChipDnssdResolve(DnssdService * browseResult, Inet::InterfaceId interface, DnssdResolveCallback callback, void * context)
+{
+    CHIP_ERROR err = CHIP_NO_ERROR;
+#if CHIP_DEVICE_CONFIG_ENABLE_WIFI
+    if (ConnectivityMgr().IsWiFiStationProvisioned())
+    {
+        err = ESPWiFiOrEthernetDnssdResolve(browseResult, interface, callback, context);
+    }
+#endif
+#if CHIP_DEVICE_CONFIG_ENABLE_THREAD
+    if (ThreadStackMgr().IsThreadProvisioned())
+    {
+        return ESPThreadDnssdResolve(browseResult, interface, callback, context);
+    }
+#endif
+    return err;
+}
+
+void ChipDnssdResolveNoLongerNeeded(const char * instanceName) {}
 CHIP_ERROR ChipDnssdReconfirmRecord(const char * hostname, chip::Inet::IPAddress address, chip::Inet::InterfaceId interface)
 {
     return CHIP_ERROR_NOT_IMPLEMENTED;
 }
+
 
 } // namespace Dnssd
 } // namespace chip

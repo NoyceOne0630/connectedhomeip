@@ -364,7 +364,6 @@ CHIP_ERROR PBKDF2_sha256::pbkdf2_sha256(const uint8_t * password, size_t plen, c
     int result       = 0;
 #if !defined(MBEDTLS_DEPRECATED_REMOVED) || MBEDTLS_VERSION_NUMBER < 0x03030000
     const mbedtls_md_info_t * md_info;
-    mbedtls_md_context_t md_ctxt;
     constexpr int use_hmac = 1;
     bool free_md_ctxt      = false;
 #endif // !defined(MBEDTLS_DEPRECATED_REMOVED) || MBEDTLS_VERSION_NUMBER < 0x03030000

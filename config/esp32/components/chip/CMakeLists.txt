@@ -137,7 +137,9 @@ if (CONFIG_ENABLE_CHIP_SHELL)
     chip_gn_arg_append("chip_build_libshell"                "true")
 endif()
 
-if (CONFIG_IDF_TARGET_ESP32H2)
+if (CONFIG_ENABLE_WIFI_STATION OR CONFIG_ENABLE_WIFI_AP)
+    chip_gn_arg_append("chip_enable_wifi"                       "true")
+else()
     chip_gn_arg_append("chip_enable_wifi"                       "false")
 endif()
 
@@ -258,6 +260,7 @@ externalproject_add(
 
 idf_component_get_property(freertos_dir freertos COMPONENT_DIR)
 
+
 # ESP-IDF components usually need 'freertos/<header.h>', while
 # CHIP might include do 'header.h'.
 # In IDF V5.0, this path has been moved to
@@ -298,6 +301,11 @@ if(CONFIG_BT_ENABLED)
         idf_component_get_property(bt_dir bt COMPONENT_DIR)
         list(APPEND chip_libraries $<TARGET_FILE:${bt_lib}>)
         list(APPEND chip_libraries ${bt_dir}/controller/lib_esp32c2/esp32c2-bt-lib/libble_app.a)
+    elseif("${CONFIG_IDF_TARGET}" STREQUAL "esp32c6")
+        idf_component_get_property(bt_lib bt COMPONENT_LIB)
+        idf_component_get_property(bt_dir bt COMPONENT_DIR)
+        list(APPEND chip_libraries $<TARGET_FILE:${bt_lib}>)
+        list(APPEND chip_libraries ${bt_dir}/controller/lib_esp32c6/esp32c6-bt-lib/libble_app.a)
     else()
         idf_component_get_property(bt_lib bt COMPONENT_LIB)
         list(APPEND chip_libraries $<TARGET_FILE:${bt_lib}> -lbtdm_app)
@@ -314,8 +322,8 @@ if(CONFIG_OPENTHREAD_ENABLED)
     list(APPEND chip_libraries $<TARGET_FILE:${openthread_lib}>)
 endif()
 
-if((NOT CONFIG_USE_MINIMAL_MDNS) AND (NOT CONFIG_IDF_TARGET_ESP32H2) AND (NOT CONFIG_IDF_TARGET_ESP32C2))
-    idf_component_get_property(mdns_lib mdns COMPONENT_LIB)
+if((NOT CONFIG_USE_MINIMAL_MDNS) AND (CONFIG_ENABLE_WIFI_STATION OR CONFIG_ENABLE_WIFI_AP))
+    idf_component_get_property(mdns_lib espressif__mdns COMPONENT_LIB)
     list(APPEND chip_libraries $<TARGET_FILE:${mdns_lib}>)
 endif()
 

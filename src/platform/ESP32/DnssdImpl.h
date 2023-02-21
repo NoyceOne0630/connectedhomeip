@@ -38,6 +38,7 @@ struct GenericContext
     Inet::InterfaceId mInterfaceId;
     mdns_search_once_t * mSearchHandle;
     mdns_result_t * mResult;
+    uint8_t mResultCount;
 };
 
 struct BrowseContext : public GenericContext
