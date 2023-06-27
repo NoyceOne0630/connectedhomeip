@@ -1134,7 +1134,76 @@ CHIP_ERROR ConnectivityManagerImpl::_SetSEDIntervalsConfig(const ConnectivityMan
 
 CHIP_ERROR ConnectivityManagerImpl::_RequestSEDActiveMode(bool onOff, bool delayIdle)
 {
-    return CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE;
+    CHIP_ERROR err = CHIP_NO_ERROR;
+
+    if (onOff)
+    {
+        mActiveModeConsumers++;
+    }
+    else
+    {
+        if (mActiveModeConsumers > 0)
+            mActiveModeConsumers--;
+    }
+    if (!onOff && delayIdle && CHIP_DEVICE_CONFIG_SED_ACTIVE_THRESHOLD.count() != 0)
+    {
+        err = DeviceLayer::SystemLayer().StartTimer(CHIP_DEVICE_CONFIG_SED_ACTIVE_THRESHOLD, RequestSEDModeUpdate, this);
+        if (CHIP_NO_ERROR == err)
+        {
+            if (!mDelayIdleTimerRunning)
+            {
+                mDelayIdleTimerRunning = true;
+                mActiveModeConsumers++;
+            }
+            return err;
+        }
+        ChipLogError(DeviceLayer, "Failed to postpone Idle Mode with error %" CHIP_ERROR_FORMAT, err.Format());
+    }
+    return SEDUpdateMode();
+}
+
+CHIP_ERROR ConnectivityManagerImpl::SEDUpdateMode()
+{
+    CHIP_ERROR err = CHIP_NO_ERROR;
+    ConnectivityManager::SEDIntervalMode mode;
+    mode = mActiveModeConsumers > 0 ? ConnectivityManager::SEDIntervalMode::Active : ConnectivityManager::SEDIntervalMode::Idle;
+
+    if (mIntervalsMode != mode)
+        err = SetSEDIntervalMode(mode);
+
+    return err;
+}
+
+void ConnectivityManagerImpl::RequestSEDModeUpdate(chip::System::Layer * apSystemLayer, void * apAppState)
+{
+    if (apAppState != nullptr)
+    {
+        ConnectivityManagerImpl *obj = static_cast<ConnectivityManagerImpl *>(apAppState);
+        if (obj->mActiveModeConsumers > 0)
+        {
+            obj->mActiveModeConsumers--;
+        }
+
+        obj->mDelayIdleTimerRunning = false;
+        obj->SEDUpdateMode();
+    }
+}
+
+CHIP_ERROR ConnectivityManagerImpl::SetSEDIntervalMode(ConnectivityManager::SEDIntervalMode intervalType)
+{
+    if (intervalType == ConnectivityManager::SEDIntervalMode::Active)
+    {
+        esp_wifi_set_ps(WIFI_PS_NONE);
+    }
+    else if (intervalType == ConnectivityManager::SEDIntervalMode::Idle)
+    {
+#if CONFIC_WIFI_POWER_SAVE_MIN
+        esp_wifi_set_ps(WIFI_PS_MIN_MODEM);
+#elif CONFIC_WIFI_POWER_SAVE_MAX
+        esp_wifi_set_ps(WIFI_PS_MAX_MODEM);
+#endif
+    }
+    return CHIP_NO_ERROR;
 }
 
 #endif // CHIP_DEVICE_CONFIG_ENABLE_SED
