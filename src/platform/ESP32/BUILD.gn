@@ -43,6 +43,7 @@ static_library("ESP32") {
     "../SingletonConfigurationManager.cpp",
     "CHIPDevicePlatformConfig.h",
     "CHIPDevicePlatformEvent.h",
+    "CHIPMem-Platform.cpp",
     "ConfigurationManagerImpl.cpp",
     "ConfigurationManagerImpl.h",
     "ConnectivityManagerImpl.cpp",
