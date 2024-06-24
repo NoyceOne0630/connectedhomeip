@@ -417,9 +417,9 @@ Global<DiscoveryImplPlatform> DiscoveryImplPlatform::sManager;
 CHIP_ERROR DiscoveryImplPlatform::InitImpl()
 {
     VerifyOrReturnError(mState == State::kUninitialized, CHIP_NO_ERROR);
-    mState = State::kInitializing;
 
     ReturnErrorOnFailure(ChipDnssdInit(HandleDnssdInit, HandleDnssdError, this));
+    mState = State::kInitializing;
     UpdateCommissionableInstanceName();
 
     return CHIP_NO_ERROR;
