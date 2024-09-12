@@ -1,0 +1,1 @@
+../../../../../../src/platform/ESP32/StaticESP32DeviceInfoProvider.h

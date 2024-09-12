@@ -54,6 +54,19 @@ CHIP_ERROR HeapTraceHelpHandler(int argc, char ** argv)
     return CHIP_NO_ERROR;
 }
 
+CHIP_ERROR HeapTracePrintHandler(int argc, char ** argv)
+{
+    printf("\tDescription\tInternal\tSPIRAM\n");
+    printf("Current Free Memory\t%d\t\t%d\n",
+           heap_caps_get_free_size(MALLOC_CAP_8BIT) - heap_caps_get_free_size(MALLOC_CAP_SPIRAM),
+           heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+    printf("Largest Free Block\t%d\t\t%d\n", heap_caps_get_largest_free_block(MALLOC_CAP_8BIT | MALLOC_CAP_INTERNAL),
+           heap_caps_get_largest_free_block(MALLOC_CAP_SPIRAM));
+    printf("Min. Ever Free Size\t%d\t\t%d\n", heap_caps_get_minimum_free_size(MALLOC_CAP_8BIT | MALLOC_CAP_INTERNAL),
+           heap_caps_get_minimum_free_size(MALLOC_CAP_SPIRAM));
+    return CHIP_NO_ERROR;
+}
+
 #if CONFIG_HEAP_TRACING_STANDALONE
 CHIP_ERROR HeapTraceResetHandler(int argc, char ** argv)
 {
@@ -129,6 +142,7 @@ void RegisterHeapTraceCommands()
 {
     static const shell_command_t sHeapSubCommands[] = {
         { &HeapTraceHelpHandler, "help", "Usage: heap-trace <subcommand>" },
+        { &HeapTracePrintHandler, "print", "Print the heap usage" },
 #if CONFIG_HEAP_TRACING_STANDALONE
         { &HeapTraceResetHandler, "reset", "Reset the heap trace baseline" },
         { &HeapTraceDumpHandler, "dump", "Dump the last collected heap trace" },

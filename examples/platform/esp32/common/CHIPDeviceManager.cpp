@@ -66,7 +66,9 @@ CHIP_ERROR CHIPDeviceManager::Init(CHIPDeviceManagerCallbacks * cb)
 
     if (flags.Has(RendezvousInformationFlag::kBLE))
     {
+        PlatformMgr().LockChipStack();
         ConnectivityMgr().SetBLEAdvertisingEnabled(true);
+        PlatformMgr().UnlockChipStack();
     }
     else if (flags.Has(RendezvousInformationFlag::kSoftAP))
     {

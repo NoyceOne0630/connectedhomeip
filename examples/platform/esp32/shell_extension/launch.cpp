@@ -38,9 +38,7 @@ namespace chip {
 void LaunchShell()
 {
     chip::Shell::Engine::Root().Init();
-#if CONFIG_HEAP_TRACING_STANDALONE || CONFIG_HEAP_TASK_TRACKING
     idf::chip::RegisterHeapTraceCommands();
-#endif // CONFIG_HEAP_TRACING_STANDALONE || CONFIG_HEAP_TASK_TRACKING
 #if CONFIG_ESP_CONSOLE_UART_DEFAULT || CONFIG_ESP_CONSOLE_UART_CUSTOM
     xTaskCreate(&MatterShellTask, "chip_cli", 2048, NULL, 5, NULL);
 #elif CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG
