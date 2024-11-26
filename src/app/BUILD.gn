@@ -168,6 +168,8 @@ static_library("interaction-model") {
     "InteractionModelEngine.cpp",
     "InteractionModelEngine.h",
     "InteractionModelHelper.h",
+    "InternalAttributeOperations.cpp",
+    "InternalAttributeOperations.h",
     "OperationalSessionSetup.cpp",
     "OperationalSessionSetup.h",
     "OperationalSessionSetupPool.h",

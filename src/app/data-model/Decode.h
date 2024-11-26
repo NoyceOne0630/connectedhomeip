@@ -53,6 +53,12 @@ CHIP_ERROR Decode(TLV::TLVReader & reader, X & x)
     return reader.Get(x);
 }
 
+template <typename X>
+CHIP_ERROR Decode(TLV::TLVReader & reader, BitMask<X> & x)
+{
+    return reader.Get(x);
+}
+
 template <typename X, typename std::enable_if_t<std::is_enum<X>::value, int> = 0>
 CHIP_ERROR Decode(TLV::TLVReader & reader, X & x)
 {
@@ -175,6 +181,12 @@ CHIP_ERROR Decode(TLV::TLVReader & reader, Nullable<X> & x)
         return CHIP_IM_GLOBAL_STATUS(ConstraintError);
     }
     return CHIP_NO_ERROR;
+}
+
+template <typename X>
+CHIP_ERROR Decode(TLV::TLVReader & reader, Nullable<BitMask<X>> & x)
+{
+    return Decode<BitMask<X>>(reader, x);
 }
 
 } // namespace DataModel
