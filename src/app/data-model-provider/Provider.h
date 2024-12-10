@@ -79,7 +79,8 @@ public:
     ///     - ACL validation (see notes on OperationFlags::kInternal)
     ///     - Validation of readability/writability (also controlled by OperationFlags::kInternal)
     ///     - Validation of timed interaction required (also controlled by OperationFlags::kInternal)
-    virtual ActionReturnStatus WriteAttribute(const WriteAttributeRequest & request, AttributeValueDecoder & decoder) = 0;
+    virtual ActionReturnStatus WriteAttribute(const WriteAttributeRequest & request, AttributeValueDecoder & decoder,
+                                              std::optional<bool> markDirty = std::nullopt) = 0;
 
     /// `handler` is used to send back the reply.
     ///    - returning `std::nullopt` means that return value was placed in handler directly.
