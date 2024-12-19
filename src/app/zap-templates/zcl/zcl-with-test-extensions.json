@@ -36,6 +36,7 @@
         "content-launch-cluster.xml",
         "content-app-observer-cluster.xml",
         "content-control-cluster.xml",
+        "custom-cluster.xml",
         "descriptor-cluster.xml",
         "device-energy-management-cluster.xml",
         "device-energy-management-mode-cluster.xml",

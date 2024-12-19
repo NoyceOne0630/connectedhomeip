@@ -29135,6 +29135,140 @@ Protocols::InteractionModel::Status Set(chip::EndpointId endpoint, uint16_t valu
 } // namespace Attributes
 } // namespace ElectricalMeasurement
 
+namespace SampleEsp {
+namespace Attributes {
+
+namespace MessageDownstream {
+
+Protocols::InteractionModel::Status Get(chip::EndpointId endpoint, chip::MutableByteSpan & value)
+{
+    uint8_t zclString[1000 + 2];
+    Protocols::InteractionModel::Status status =
+        emberAfReadAttribute(endpoint, Clusters::SampleEsp::Id, Id, zclString, sizeof(zclString));
+    VerifyOrReturnError(Protocols::InteractionModel::Status::Success == status, status);
+    size_t length = emberAfLongStringLength(zclString);
+    if (length == NumericAttributeTraits<uint16_t>::kNullValue)
+    {
+        return Protocols::InteractionModel::Status::ConstraintError;
+    }
+
+    VerifyOrReturnError(value.size() == 1000, Protocols::InteractionModel::Status::InvalidDataType);
+    memcpy(value.data(), &zclString[2], 1000);
+    value.reduce_size(length);
+    return status;
+}
+Protocols::InteractionModel::Status Set(chip::EndpointId endpoint, chip::ByteSpan value)
+{
+    static_assert(1000 < NumericAttributeTraits<uint16_t>::kNullValue, "value.size() might be too big");
+    VerifyOrReturnError(value.size() <= 1000, Protocols::InteractionModel::Status::ConstraintError);
+    uint8_t zclString[1000 + 2];
+    auto length = static_cast<uint16_t>(value.size());
+    Encoding::LittleEndian::Put16(zclString, length);
+    memcpy(&zclString[2], value.data(), value.size());
+    return emberAfWriteAttribute(endpoint, Clusters::SampleEsp::Id, Id, zclString, ZCL_LONG_OCTET_STRING_ATTRIBUTE_TYPE);
+}
+
+} // namespace MessageDownstream
+
+namespace MessageUpstream {
+
+Protocols::InteractionModel::Status Get(chip::EndpointId endpoint, chip::MutableByteSpan & value)
+{
+    uint8_t zclString[1000 + 2];
+    Protocols::InteractionModel::Status status =
+        emberAfReadAttribute(endpoint, Clusters::SampleEsp::Id, Id, zclString, sizeof(zclString));
+    VerifyOrReturnError(Protocols::InteractionModel::Status::Success == status, status);
+    size_t length = emberAfLongStringLength(zclString);
+    if (length == NumericAttributeTraits<uint16_t>::kNullValue)
+    {
+        return Protocols::InteractionModel::Status::ConstraintError;
+    }
+
+    VerifyOrReturnError(value.size() == 1000, Protocols::InteractionModel::Status::InvalidDataType);
+    memcpy(value.data(), &zclString[2], 1000);
+    value.reduce_size(length);
+    return status;
+}
+Protocols::InteractionModel::Status Set(chip::EndpointId endpoint, chip::ByteSpan value)
+{
+    static_assert(1000 < NumericAttributeTraits<uint16_t>::kNullValue, "value.size() might be too big");
+    VerifyOrReturnError(value.size() <= 1000, Protocols::InteractionModel::Status::ConstraintError);
+    uint8_t zclString[1000 + 2];
+    auto length = static_cast<uint16_t>(value.size());
+    Encoding::LittleEndian::Put16(zclString, length);
+    memcpy(&zclString[2], value.data(), value.size());
+    return emberAfWriteAttribute(endpoint, Clusters::SampleEsp::Id, Id, zclString, ZCL_LONG_OCTET_STRING_ATTRIBUTE_TYPE);
+}
+
+} // namespace MessageUpstream
+
+namespace FeatureMap {
+
+Protocols::InteractionModel::Status Get(chip::EndpointId endpoint, uint32_t * value)
+{
+    using Traits = NumericAttributeTraits<uint32_t>;
+    Traits::StorageType temp;
+    uint8_t * readable = Traits::ToAttributeStoreRepresentation(temp);
+    Protocols::InteractionModel::Status status =
+        emberAfReadAttribute(endpoint, Clusters::SampleEsp::Id, Id, readable, sizeof(temp));
+    VerifyOrReturnError(Protocols::InteractionModel::Status::Success == status, status);
+    if (!Traits::CanRepresentValue(/* isNullable = */ false, temp))
+    {
+        return Protocols::InteractionModel::Status::ConstraintError;
+    }
+    *value = Traits::StorageToWorking(temp);
+    return status;
+}
+Protocols::InteractionModel::Status Set(chip::EndpointId endpoint, uint32_t value)
+{
+    using Traits = NumericAttributeTraits<uint32_t>;
+    if (!Traits::CanRepresentValue(/* isNullable = */ false, value))
+    {
+        return Protocols::InteractionModel::Status::ConstraintError;
+    }
+    Traits::StorageType storageValue;
+    Traits::WorkingToStorage(value, storageValue);
+    uint8_t * writable = Traits::ToAttributeStoreRepresentation(storageValue);
+    return emberAfWriteAttribute(endpoint, Clusters::SampleEsp::Id, Id, writable, ZCL_BITMAP32_ATTRIBUTE_TYPE);
+}
+
+} // namespace FeatureMap
+
+namespace ClusterRevision {
+
+Protocols::InteractionModel::Status Get(chip::EndpointId endpoint, uint16_t * value)
+{
+    using Traits = NumericAttributeTraits<uint16_t>;
+    Traits::StorageType temp;
+    uint8_t * readable = Traits::ToAttributeStoreRepresentation(temp);
+    Protocols::InteractionModel::Status status =
+        emberAfReadAttribute(endpoint, Clusters::SampleEsp::Id, Id, readable, sizeof(temp));
+    VerifyOrReturnError(Protocols::InteractionModel::Status::Success == status, status);
+    if (!Traits::CanRepresentValue(/* isNullable = */ false, temp))
+    {
+        return Protocols::InteractionModel::Status::ConstraintError;
+    }
+    *value = Traits::StorageToWorking(temp);
+    return status;
+}
+Protocols::InteractionModel::Status Set(chip::EndpointId endpoint, uint16_t value)
+{
+    using Traits = NumericAttributeTraits<uint16_t>;
+    if (!Traits::CanRepresentValue(/* isNullable = */ false, value))
+    {
+        return Protocols::InteractionModel::Status::ConstraintError;
+    }
+    Traits::StorageType storageValue;
+    Traits::WorkingToStorage(value, storageValue);
+    uint8_t * writable = Traits::ToAttributeStoreRepresentation(storageValue);
+    return emberAfWriteAttribute(endpoint, Clusters::SampleEsp::Id, Id, writable, ZCL_INT16U_ATTRIBUTE_TYPE);
+}
+
+} // namespace ClusterRevision
+
+} // namespace Attributes
+} // namespace SampleEsp
+
 namespace UnitTesting {
 namespace Attributes {
 

@@ -36,6 +36,7 @@
         "content-app-observer-cluster.xml",
         "content-control-cluster.xml",
         "descriptor-cluster.xml",
+        "custom-cluster.xml",
         "device-energy-management-cluster.xml",
         "device-energy-management-mode-cluster.xml",
         "diagnostic-logs-cluster.xml",

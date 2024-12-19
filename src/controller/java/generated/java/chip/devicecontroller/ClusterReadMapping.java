@@ -19372,6 +19372,98 @@ public class ClusterReadMapping {
      
        return result;
     }
+    private static Map<String, InteractionInfo> readSampleEspInteractionInfo() {
+       Map<String, InteractionInfo> result = new LinkedHashMap<>();Map<String, CommandParameterInfo> readSampleEspMessageDownstreamCommandParams = new LinkedHashMap<String, CommandParameterInfo>();
+        InteractionInfo readSampleEspMessageDownstreamAttributeInteractionInfo = new InteractionInfo(
+          (cluster, callback, commandArguments) -> {
+            ((ChipClusters.SampleEspCluster) cluster).readMessageDownstreamAttribute(
+              (ChipClusters.OctetStringAttributeCallback) callback
+            );
+          },
+          () -> new ClusterInfoMapping.DelegatedOctetStringAttributeCallback(),
+          readSampleEspMessageDownstreamCommandParams
+        );
+        result.put("readMessageDownstreamAttribute", readSampleEspMessageDownstreamAttributeInteractionInfo);
+     Map<String, CommandParameterInfo> readSampleEspMessageUpstreamCommandParams = new LinkedHashMap<String, CommandParameterInfo>();
+        InteractionInfo readSampleEspMessageUpstreamAttributeInteractionInfo = new InteractionInfo(
+          (cluster, callback, commandArguments) -> {
+            ((ChipClusters.SampleEspCluster) cluster).readMessageUpstreamAttribute(
+              (ChipClusters.OctetStringAttributeCallback) callback
+            );
+          },
+          () -> new ClusterInfoMapping.DelegatedOctetStringAttributeCallback(),
+          readSampleEspMessageUpstreamCommandParams
+        );
+        result.put("readMessageUpstreamAttribute", readSampleEspMessageUpstreamAttributeInteractionInfo);
+     Map<String, CommandParameterInfo> readSampleEspGeneratedCommandListCommandParams = new LinkedHashMap<String, CommandParameterInfo>();
+        InteractionInfo readSampleEspGeneratedCommandListAttributeInteractionInfo = new InteractionInfo(
+          (cluster, callback, commandArguments) -> {
+            ((ChipClusters.SampleEspCluster) cluster).readGeneratedCommandListAttribute(
+              (ChipClusters.SampleEspCluster.GeneratedCommandListAttributeCallback) callback
+            );
+          },
+          () -> new ClusterInfoMapping.DelegatedSampleEspClusterGeneratedCommandListAttributeCallback(),
+          readSampleEspGeneratedCommandListCommandParams
+        );
+        result.put("readGeneratedCommandListAttribute", readSampleEspGeneratedCommandListAttributeInteractionInfo);
+     Map<String, CommandParameterInfo> readSampleEspAcceptedCommandListCommandParams = new LinkedHashMap<String, CommandParameterInfo>();
+        InteractionInfo readSampleEspAcceptedCommandListAttributeInteractionInfo = new InteractionInfo(
+          (cluster, callback, commandArguments) -> {
+            ((ChipClusters.SampleEspCluster) cluster).readAcceptedCommandListAttribute(
+              (ChipClusters.SampleEspCluster.AcceptedCommandListAttributeCallback) callback
+            );
+          },
+          () -> new ClusterInfoMapping.DelegatedSampleEspClusterAcceptedCommandListAttributeCallback(),
+          readSampleEspAcceptedCommandListCommandParams
+        );
+        result.put("readAcceptedCommandListAttribute", readSampleEspAcceptedCommandListAttributeInteractionInfo);
+     Map<String, CommandParameterInfo> readSampleEspEventListCommandParams = new LinkedHashMap<String, CommandParameterInfo>();
+        InteractionInfo readSampleEspEventListAttributeInteractionInfo = new InteractionInfo(
+          (cluster, callback, commandArguments) -> {
+            ((ChipClusters.SampleEspCluster) cluster).readEventListAttribute(
+              (ChipClusters.SampleEspCluster.EventListAttributeCallback) callback
+            );
+          },
+          () -> new ClusterInfoMapping.DelegatedSampleEspClusterEventListAttributeCallback(),
+          readSampleEspEventListCommandParams
+        );
+        result.put("readEventListAttribute", readSampleEspEventListAttributeInteractionInfo);
+     Map<String, CommandParameterInfo> readSampleEspAttributeListCommandParams = new LinkedHashMap<String, CommandParameterInfo>();
+        InteractionInfo readSampleEspAttributeListAttributeInteractionInfo = new InteractionInfo(
+          (cluster, callback, commandArguments) -> {
+            ((ChipClusters.SampleEspCluster) cluster).readAttributeListAttribute(
+              (ChipClusters.SampleEspCluster.AttributeListAttributeCallback) callback
+            );
+          },
+          () -> new ClusterInfoMapping.DelegatedSampleEspClusterAttributeListAttributeCallback(),
+          readSampleEspAttributeListCommandParams
+        );
+        result.put("readAttributeListAttribute", readSampleEspAttributeListAttributeInteractionInfo);
+     Map<String, CommandParameterInfo> readSampleEspFeatureMapCommandParams = new LinkedHashMap<String, CommandParameterInfo>();
+        InteractionInfo readSampleEspFeatureMapAttributeInteractionInfo = new InteractionInfo(
+          (cluster, callback, commandArguments) -> {
+            ((ChipClusters.SampleEspCluster) cluster).readFeatureMapAttribute(
+              (ChipClusters.LongAttributeCallback) callback
+            );
+          },
+          () -> new ClusterInfoMapping.DelegatedLongAttributeCallback(),
+          readSampleEspFeatureMapCommandParams
+        );
+        result.put("readFeatureMapAttribute", readSampleEspFeatureMapAttributeInteractionInfo);
+     Map<String, CommandParameterInfo> readSampleEspClusterRevisionCommandParams = new LinkedHashMap<String, CommandParameterInfo>();
+        InteractionInfo readSampleEspClusterRevisionAttributeInteractionInfo = new InteractionInfo(
+          (cluster, callback, commandArguments) -> {
+            ((ChipClusters.SampleEspCluster) cluster).readClusterRevisionAttribute(
+              (ChipClusters.IntegerAttributeCallback) callback
+            );
+          },
+          () -> new ClusterInfoMapping.DelegatedIntegerAttributeCallback(),
+          readSampleEspClusterRevisionCommandParams
+        );
+        result.put("readClusterRevisionAttribute", readSampleEspClusterRevisionAttributeInteractionInfo);
+     
+       return result;
+    }
     private static Map<String, InteractionInfo> readUnitTestingInteractionInfo() {
        Map<String, InteractionInfo> result = new LinkedHashMap<>();Map<String, CommandParameterInfo> readUnitTestingBooleanCommandParams = new LinkedHashMap<String, CommandParameterInfo>();
         InteractionInfo readUnitTestingBooleanAttributeInteractionInfo = new InteractionInfo(
@@ -20603,6 +20695,7 @@ public class ClusterReadMapping {
             put("contentControl", readContentControlInteractionInfo());
             put("contentAppObserver", readContentAppObserverInteractionInfo());
             put("electricalMeasurement", readElectricalMeasurementInteractionInfo());
+            put("sampleEsp", readSampleEspInteractionInfo());
             put("unitTesting", readUnitTestingInteractionInfo());
             put("faultInjection", readFaultInjectionInteractionInfo());
             put("sampleMei", readSampleMeiInteractionInfo());}};

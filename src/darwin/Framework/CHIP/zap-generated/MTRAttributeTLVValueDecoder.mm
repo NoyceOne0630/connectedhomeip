@@ -17849,6 +17849,40 @@ static id _Nullable DecodeAttributeValueForElectricalMeasurementCluster(Attribut
     *aError = CHIP_ERROR_IM_MALFORMED_ATTRIBUTE_PATH_IB;
     return nil;
 }
+static id _Nullable DecodeAttributeValueForSampleESPCluster(AttributeId aAttributeId, TLV::TLVReader & aReader, CHIP_ERROR * aError)
+{
+    using namespace Clusters::SampleEsp;
+    switch (aAttributeId) {
+    case Attributes::MessageDownstream::Id: {
+        using TypeInfo = Attributes::MessageDownstream::TypeInfo;
+        TypeInfo::DecodableType cppValue;
+        *aError = DataModel::Decode(aReader, cppValue);
+        if (*aError != CHIP_NO_ERROR) {
+            return nil;
+        }
+        NSData * _Nonnull value;
+        value = AsData(cppValue);
+        return value;
+    }
+    case Attributes::MessageUpstream::Id: {
+        using TypeInfo = Attributes::MessageUpstream::TypeInfo;
+        TypeInfo::DecodableType cppValue;
+        *aError = DataModel::Decode(aReader, cppValue);
+        if (*aError != CHIP_NO_ERROR) {
+            return nil;
+        }
+        NSData * _Nonnull value;
+        value = AsData(cppValue);
+        return value;
+    }
+    default: {
+        break;
+    }
+    }
+
+    *aError = CHIP_ERROR_IM_MALFORMED_ATTRIBUTE_PATH_IB;
+    return nil;
+}
 static id _Nullable DecodeAttributeValueForUnitTestingCluster(AttributeId aAttributeId, TLV::TLVReader & aReader, CHIP_ERROR * aError)
 {
     using namespace Clusters::UnitTesting;
@@ -19637,6 +19671,9 @@ id _Nullable MTRDecodeAttributeValue(const ConcreteAttributePath & aPath, TLV::T
     }
     case Clusters::ElectricalMeasurement::Id: {
         return DecodeAttributeValueForElectricalMeasurementCluster(aPath.mAttributeId, aReader, aError);
+    }
+    case Clusters::SampleEsp::Id: {
+        return DecodeAttributeValueForSampleESPCluster(aPath.mAttributeId, aReader, aError);
     }
     case Clusters::UnitTesting::Id: {
         return DecodeAttributeValueForUnitTestingCluster(aPath.mAttributeId, aReader, aError);

@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<!--
+Copyright (c) 2023 Project CHIP Authors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<configurator>
+  <domain name="CHIP"/>
+
+  <cluster>
+    <domain>General</domain>
+    <name>Sample ESP</name>
+    <!-- The MSB 16 bits of <code> are the VendorID. Replace this with your
+         VendorID. 0xFFF1 is a Test VendorID.
+
+         The LSB 16 bits of <code> are a self-assigned ClusterID -->
+    <code>0x131BFC20</code>
+    <define>SAMPLE_ESP_CLUSTER</define>
+    <description>The Sample Espressif cluster</description>
+
+    <!-- Attributes -->
+    <attribute side="server" code="0x0000" define="MESSAGE_DOWNSTREAM" type="long_octet_string" writable="true" length="1000">MessageDownstream</attribute>
+    <attribute side="server" code="0x0001" define="MESSAGE_UPSTREAM" type="long_octet_string" writable="false" length="1000">MessageUpstream</attribute>
+
+  </cluster>
+</configurator>

@@ -3842,6 +3842,30 @@ public class ClusterWriteMapping {
     );
     writeElectricalMeasurementInteractionInfo.put("writeAcOverloadAlarmsMaskAttribute", writeElectricalMeasurementAcOverloadAlarmsMaskAttributeInteractionInfo);
     writeAttributeMap.put("electricalMeasurement", writeElectricalMeasurementInteractionInfo);
+    Map<String, InteractionInfo> writeSampleEspInteractionInfo = new LinkedHashMap<>();
+    Map<String, CommandParameterInfo> writeSampleEspMessageDownstreamCommandParams = new LinkedHashMap<String, CommandParameterInfo>();
+    CommandParameterInfo sampleEspmessageDownstreamCommandParameterInfo =
+        new CommandParameterInfo(
+            "value", 
+            byte[].class, 
+            byte[].class 
+        );
+    writeSampleEspMessageDownstreamCommandParams.put(
+        "value",
+        sampleEspmessageDownstreamCommandParameterInfo
+    );
+    InteractionInfo writeSampleEspMessageDownstreamAttributeInteractionInfo = new InteractionInfo(
+      (cluster, callback, commandArguments) -> {
+        ((ChipClusters.SampleEspCluster) cluster).writeMessageDownstreamAttribute(
+          (DefaultClusterCallback) callback,
+          (byte[]) commandArguments.get("value")
+        );
+      },
+      () -> new ClusterInfoMapping.DelegatedDefaultClusterCallback(),
+      writeSampleEspMessageDownstreamCommandParams
+    );
+    writeSampleEspInteractionInfo.put("writeMessageDownstreamAttribute", writeSampleEspMessageDownstreamAttributeInteractionInfo);
+    writeAttributeMap.put("sampleEsp", writeSampleEspInteractionInfo);
     Map<String, InteractionInfo> writeUnitTestingInteractionInfo = new LinkedHashMap<>();
     Map<String, CommandParameterInfo> writeUnitTestingBooleanCommandParams = new LinkedHashMap<String, CommandParameterInfo>();
     CommandParameterInfo unitTestingbooleanCommandParameterInfo =

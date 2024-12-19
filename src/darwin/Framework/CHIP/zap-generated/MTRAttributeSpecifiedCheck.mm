@@ -6203,6 +6203,39 @@ static BOOL AttributeIsSpecifiedInElectricalMeasurementCluster(AttributeId aAttr
     }
     }
 }
+static BOOL AttributeIsSpecifiedInSampleESPCluster(AttributeId aAttributeId)
+{
+    using namespace Clusters::SampleEsp;
+    switch (aAttributeId) {
+    case Attributes::MessageDownstream::Id: {
+        return YES;
+    }
+    case Attributes::MessageUpstream::Id: {
+        return YES;
+    }
+    case Attributes::GeneratedCommandList::Id: {
+        return YES;
+    }
+    case Attributes::AcceptedCommandList::Id: {
+        return YES;
+    }
+    case Attributes::EventList::Id: {
+        return YES;
+    }
+    case Attributes::AttributeList::Id: {
+        return YES;
+    }
+    case Attributes::FeatureMap::Id: {
+        return YES;
+    }
+    case Attributes::ClusterRevision::Id: {
+        return YES;
+    }
+    default: {
+        return NO;
+    }
+    }
+}
 static BOOL AttributeIsSpecifiedInUnitTestingCluster(AttributeId aAttributeId)
 {
     using namespace Clusters::UnitTesting;
@@ -6848,6 +6881,9 @@ BOOL MTRAttributeIsSpecified(ClusterId aClusterId, AttributeId aAttributeId)
     }
     case Clusters::ElectricalMeasurement::Id: {
         return AttributeIsSpecifiedInElectricalMeasurementCluster(aAttributeId);
+    }
+    case Clusters::SampleEsp::Id: {
+        return AttributeIsSpecifiedInSampleESPCluster(aAttributeId);
     }
     case Clusters::UnitTesting::Id: {
         return AttributeIsSpecifiedInUnitTestingCluster(aAttributeId);

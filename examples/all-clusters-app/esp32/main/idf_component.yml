@@ -1,2 +1,3 @@
 dependencies:
     espressif/led_strip: "^1.0.0-alpha"
+    espressif/esp_diag_data_store: "1.0.1"

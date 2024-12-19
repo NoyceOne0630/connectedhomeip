@@ -19258,6 +19258,90 @@ public class ClusterInfoMapping {
     }
   }
 
+  public static class DelegatedSampleEspClusterGeneratedCommandListAttributeCallback implements ChipClusters.SampleEspCluster.GeneratedCommandListAttributeCallback, DelegatedClusterCallback {
+    private ClusterCommandCallback callback;
+    @Override
+    public void setCallbackDelegate(ClusterCommandCallback callback) {
+      this.callback = callback;
+    }
+
+    @Override
+    public void onSuccess(List<Long> valueList) {
+      Map<CommandResponseInfo, Object> responseValues = new LinkedHashMap<>();
+      CommandResponseInfo commandResponseInfo = new CommandResponseInfo("valueList", "List<Long>");
+      responseValues.put(commandResponseInfo, valueList);
+      callback.onSuccess(responseValues);
+    }
+
+    @Override
+    public void onError(Exception ex) {
+      callback.onFailure(ex);
+    }
+  }
+
+  public static class DelegatedSampleEspClusterAcceptedCommandListAttributeCallback implements ChipClusters.SampleEspCluster.AcceptedCommandListAttributeCallback, DelegatedClusterCallback {
+    private ClusterCommandCallback callback;
+    @Override
+    public void setCallbackDelegate(ClusterCommandCallback callback) {
+      this.callback = callback;
+    }
+
+    @Override
+    public void onSuccess(List<Long> valueList) {
+      Map<CommandResponseInfo, Object> responseValues = new LinkedHashMap<>();
+      CommandResponseInfo commandResponseInfo = new CommandResponseInfo("valueList", "List<Long>");
+      responseValues.put(commandResponseInfo, valueList);
+      callback.onSuccess(responseValues);
+    }
+
+    @Override
+    public void onError(Exception ex) {
+      callback.onFailure(ex);
+    }
+  }
+
+  public static class DelegatedSampleEspClusterEventListAttributeCallback implements ChipClusters.SampleEspCluster.EventListAttributeCallback, DelegatedClusterCallback {
+    private ClusterCommandCallback callback;
+    @Override
+    public void setCallbackDelegate(ClusterCommandCallback callback) {
+      this.callback = callback;
+    }
+
+    @Override
+    public void onSuccess(List<Long> valueList) {
+      Map<CommandResponseInfo, Object> responseValues = new LinkedHashMap<>();
+      CommandResponseInfo commandResponseInfo = new CommandResponseInfo("valueList", "List<Long>");
+      responseValues.put(commandResponseInfo, valueList);
+      callback.onSuccess(responseValues);
+    }
+
+    @Override
+    public void onError(Exception ex) {
+      callback.onFailure(ex);
+    }
+  }
+
+  public static class DelegatedSampleEspClusterAttributeListAttributeCallback implements ChipClusters.SampleEspCluster.AttributeListAttributeCallback, DelegatedClusterCallback {
+    private ClusterCommandCallback callback;
+    @Override
+    public void setCallbackDelegate(ClusterCommandCallback callback) {
+      this.callback = callback;
+    }
+
+    @Override
+    public void onSuccess(List<Long> valueList) {
+      Map<CommandResponseInfo, Object> responseValues = new LinkedHashMap<>();
+      CommandResponseInfo commandResponseInfo = new CommandResponseInfo("valueList", "List<Long>");
+      responseValues.put(commandResponseInfo, valueList);
+      callback.onSuccess(responseValues);
+    }
+
+    @Override
+    public void onError(Exception ex) {
+      callback.onFailure(ex);
+    }
+  }
+
 
   public static class DelegatedUnitTestingClusterTestSpecificResponseCallback implements ChipClusters.UnitTestingCluster.TestSpecificResponseCallback, DelegatedClusterCallback {
     private ClusterCommandCallback callback;
@@ -21237,6 +21321,10 @@ public class ClusterInfoMapping {
       (ptr, endpointId) -> new ChipClusters.ElectricalMeasurementCluster(ptr, endpointId), new HashMap<>());
     clusterMap.put("electricalMeasurement", electricalMeasurementClusterInfo);
 
+    ClusterInfo sampleEspClusterInfo = new ClusterInfo(
+      (ptr, endpointId) -> new ChipClusters.SampleEspCluster(ptr, endpointId), new HashMap<>());
+    clusterMap.put("sampleEsp", sampleEspClusterInfo);
+
     ClusterInfo unitTestingClusterInfo = new ClusterInfo(
       (ptr, endpointId) -> new ChipClusters.UnitTestingCluster(ptr, endpointId), new HashMap<>());
     clusterMap.put("unitTesting", unitTestingClusterInfo);
@@ -21368,6 +21456,7 @@ public class ClusterInfoMapping {
     destination.get("contentControl").combineCommands(source.get("contentControl"));
     destination.get("contentAppObserver").combineCommands(source.get("contentAppObserver"));
     destination.get("electricalMeasurement").combineCommands(source.get("electricalMeasurement"));
+    destination.get("sampleEsp").combineCommands(source.get("sampleEsp"));
     destination.get("unitTesting").combineCommands(source.get("unitTesting"));
     destination.get("faultInjection").combineCommands(source.get("faultInjection"));
     destination.get("sampleMei").combineCommands(source.get("sampleMei"));
@@ -27352,6 +27441,10 @@ public class ClusterInfoMapping {
     electricalMeasurementClusterInteractionInfoMap.put("getMeasurementProfileCommand", electricalMeasurementgetMeasurementProfileCommandInteractionInfo);
 
     commandMap.put("electricalMeasurement", electricalMeasurementClusterInteractionInfoMap);
+
+    Map<String, InteractionInfo> sampleEspClusterInteractionInfoMap = new LinkedHashMap<>();
+
+    commandMap.put("sampleEsp", sampleEspClusterInteractionInfoMap);
 
     Map<String, InteractionInfo> unitTestingClusterInteractionInfoMap = new LinkedHashMap<>();
 

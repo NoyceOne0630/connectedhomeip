@@ -363,6 +363,9 @@ NSString * MTRClusterNameForID(MTRClusterIDType clusterID)
     case MTRClusterIDTypeElectricalMeasurementID:
         result = @"ElectricalMeasurement";
         break;
+    case MTRClusterIDTypeSampleESPID:
+        result = @"SampleESP";
+        break;
     case MTRClusterIDTypeUnitTestingID:
         result = @"UnitTesting";
         break;
@@ -8394,6 +8397,48 @@ NSString * MTRAttributeNameForID(MTRClusterIDType clusterID, MTRAttributeIDType 
             break;
 
         case MTRAttributeIDTypeClusterElectricalMeasurementAttributeClusterRevisionID:
+            result = @"ClusterRevision";
+            break;
+
+        default:
+            result = [NSString stringWithFormat:@"<Unknown attributeID %d>", attributeID];
+            break;
+        }
+
+    case MTRClusterIDTypeSampleESPID:
+
+        switch (attributeID) {
+
+            // Cluster SampleESP attributes
+        case MTRAttributeIDTypeClusterSampleESPAttributeMessageDownstreamID:
+            result = @"MessageDownstream";
+            break;
+
+        case MTRAttributeIDTypeClusterSampleESPAttributeMessageUpstreamID:
+            result = @"MessageUpstream";
+            break;
+
+        case MTRAttributeIDTypeClusterSampleESPAttributeGeneratedCommandListID:
+            result = @"GeneratedCommandList";
+            break;
+
+        case MTRAttributeIDTypeClusterSampleESPAttributeAcceptedCommandListID:
+            result = @"AcceptedCommandList";
+            break;
+
+        case MTRAttributeIDTypeClusterSampleESPAttributeEventListID:
+            result = @"EventList";
+            break;
+
+        case MTRAttributeIDTypeClusterSampleESPAttributeAttributeListID:
+            result = @"AttributeList";
+            break;
+
+        case MTRAttributeIDTypeClusterSampleESPAttributeFeatureMapID:
+            result = @"FeatureMap";
+            break;
+
+        case MTRAttributeIDTypeClusterSampleESPAttributeClusterRevisionID:
             result = @"ClusterRevision";
             break;
 

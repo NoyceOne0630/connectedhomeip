@@ -5191,6 +5191,32 @@ Protocols::InteractionModel::Status Set(chip::EndpointId endpoint, uint16_t valu
 } // namespace Attributes
 } // namespace ElectricalMeasurement
 
+namespace SampleEsp {
+namespace Attributes {
+
+namespace MessageDownstream {
+Protocols::InteractionModel::Status Get(chip::EndpointId endpoint, chip::MutableByteSpan & value); // long_octet_string
+Protocols::InteractionModel::Status Set(chip::EndpointId endpoint, chip::ByteSpan value);
+} // namespace MessageDownstream
+
+namespace MessageUpstream {
+Protocols::InteractionModel::Status Get(chip::EndpointId endpoint, chip::MutableByteSpan & value); // long_octet_string
+Protocols::InteractionModel::Status Set(chip::EndpointId endpoint, chip::ByteSpan value);
+} // namespace MessageUpstream
+
+namespace FeatureMap {
+Protocols::InteractionModel::Status Get(chip::EndpointId endpoint, uint32_t * value); // bitmap32
+Protocols::InteractionModel::Status Set(chip::EndpointId endpoint, uint32_t value);
+} // namespace FeatureMap
+
+namespace ClusterRevision {
+Protocols::InteractionModel::Status Get(chip::EndpointId endpoint, uint16_t * value); // int16u
+Protocols::InteractionModel::Status Set(chip::EndpointId endpoint, uint16_t value);
+} // namespace ClusterRevision
+
+} // namespace Attributes
+} // namespace SampleEsp
+
 namespace UnitTesting {
 namespace Attributes {
 

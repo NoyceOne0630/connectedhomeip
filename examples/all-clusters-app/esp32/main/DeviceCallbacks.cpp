@@ -27,6 +27,9 @@
 #include "Globals.h"
 #include "LEDWidget.h"
 #include "WiFiWidget.h"
+#include "support/CodeUtils.h"
+#include "support/ScopedBuffer.h"
+#include "support/Span.h"
 #include <app-common/zap-generated/attributes/Accessors.h>
 #include <app-common/zap-generated/ids/Attributes.h>
 #include <app/CommandHandler.h>
@@ -113,6 +116,26 @@ void AppDeviceCallbacks::PostAttributeChangeCallback(EndpointId endpointId, Clus
     case Clusters::Identify::Id:
         OnIdentifyPostAttributeChangeCallback(endpointId, attributeId, size, value);
         break;
+    case Clusters::SampleEsp::Id:
+        if (attributeId == Clusters::SampleEsp::Attributes::MessageDownstream::Id)
+        {
+            // For octet string the value will start with the 16-bits length 
+            uint16_t length;
+            memcpy(&length, value, sizeof(length));
+            Platform::ScopedMemoryBuffer<uint8_t> reply;
+            reply.Alloc(length);
+            VerifyOrDie(reply.Get());
+            printf("Message down stream: ");
+            for (int i = 0; i < length; ++i)
+            {
+                reply[length - 1 - i] = value[i + 2];
+                printf("%02x ", value[i + 2]);
+            }
+            printf("\n");
+            chip::ByteSpan replySpan(reply.Get(), length);
+            // reply reversal of the down stream
+            Clusters::SampleEsp::Attributes::MessageUpstream::Set(endpointId, replySpan);
+        }
     default:
         ESP_LOGI(TAG, "Unhandled cluster ID: %" PRIu32, clusterId);
         break;
