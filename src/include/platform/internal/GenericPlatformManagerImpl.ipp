@@ -104,11 +104,11 @@ CHIP_ERROR GenericPlatformManagerImpl<ImplClass>::_InitChipStack()
     // Initialize the CHIP BLE manager.
 #if CHIP_DEVICE_CONFIG_ENABLE_CHIPOBLE
     err = BLEMgr().Init();
-    if (err != CHIP_NO_ERROR)
+    if (err != CHIP_NO_ERROR && err != CHIP_ERROR_INCORRECT_STATE)
     {
         ChipLogError(DeviceLayer, "BLEManager initialization failed: %" CHIP_ERROR_FORMAT, err.Format());
+        ExitNow();
     }
-    SuccessOrExit(err);
 #endif
 
     // Initialize the Connectivity Manager object.
@@ -148,7 +148,7 @@ void GenericPlatformManagerImpl<ImplClass>::_Shutdown()
 
 #if CHIP_DEVICE_CONFIG_ENABLE_CHIPOBLE
     ChipLogProgress(DeviceLayer, "BLE Layer shutdown");
-    BLEMgr().Shutdown();
+//    BLEMgr().Shutdown();
 #endif
 
     ChipLogProgress(DeviceLayer, "System Layer shutdown");

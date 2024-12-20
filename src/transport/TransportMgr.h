@@ -81,7 +81,11 @@ public:
     template <typename... Args>
     CHIP_ERROR Init(Args &&... transportInitArgs)
     {
-        ReturnErrorOnFailure(mTransport.Init(this, std::forward<Args>(transportInitArgs)...));
+        CHIP_ERROR err = mTransport.Init(this, std::forward<Args>(transportInitArgs)...);
+        if (err == CHIP_ERROR_INCORRECT_STATE) {
+            err = CHIP_NO_ERROR;
+        }
+        ReturnErrorOnFailure(err);
         return TransportMgrBase::Init(&mTransport);
     }
 

@@ -190,7 +190,7 @@ void GenericPlatformManagerImpl_FreeRTOS<ImplClass>::_RunEventLoop(void)
     ChipDeviceEvent event;
 
     // Lock the CHIP stack.
-    StackLock lock;
+    _LockChipStack();
 
     bool oldShouldRunEventLoop = false;
     if (!mShouldRunEventLoop.compare_exchange_strong(oldShouldRunEventLoop /* expected */, true /* desired */))
@@ -258,6 +258,9 @@ void GenericPlatformManagerImpl_FreeRTOS<ImplClass>::_RunEventLoop(void)
             eventReceived = xQueueReceive(mChipEventQueue, &event, 0);
         }
     }
+    _UnlockChipStack();
+    mEventLoopTask = NULL;
+    vTaskDelete(NULL);
 }
 
 template <class ImplClass>

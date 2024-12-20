@@ -95,11 +95,11 @@ void EventManagement::Init(Messaging::ExchangeManager * apExchangeManager, uint3
         return;
     }
 
-    if (mState != EventManagementStates::Shutdown)
-    {
-        ChipLogError(EventLogging, "Invalid EventManagement State");
-        return;
-    }
+//    if (mState != EventManagementStates::Shutdown)
+//    {
+//        ChipLogError(EventLogging, "Invalid EventManagement State");
+//        return;
+//    }
     mpExchangeMgr = apExchangeManager;
 
     for (uint32_t bufferIndex = 0; bufferIndex < aNumBuffers; bufferIndex++)
